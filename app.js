@@ -8,13 +8,15 @@ router.get("/", function(req,res) {
 });
 
 router.get("/test", function(req,res) {
-	res.sendFile(path.join(__dirname + "/test.html"));
+	res.sendFile(path.join(__dirname + "/test2.html"));
 });
 	
 app.use("/lib", express.static(__dirname + "/lib"));
 app.use("/src", express.static(__dirname + "/src"));
+app.use("/glsl", express.static(__dirname + "/glsl"));
 app.use("/", router);
 
 app.listen(3010);
 
 console.log('Running at Port 3010');
+
