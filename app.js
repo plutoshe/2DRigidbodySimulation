@@ -12,6 +12,7 @@ router.get("/test", function(req,res) {
 });
 	
 app.use("/lib", express.static(__dirname + "/lib"));
+app.use("/src", express.static(__dirname + "/src"));
 app.use("/", router);
 
 app.listen(3010);
