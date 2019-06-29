@@ -8,7 +8,10 @@ function init()
 {
 	var display = $('#display')[0];
     var scene = new THREE.Scene();
- 	var camera = new THREE.PerspectiveCamera( 90, 1, 0.1, 500 );
+    var camera = new THREE.PerspectiveCamera( 90, 800 / 600, 0.1, 1000 );
+    	camera.position.x = 0;
+	camera.position.y = 0;
+	camera.position.z = 600;
 
 	var renderer = new THREE.WebGLRenderer();
 	var width = max(display.clientWidth, 100);
@@ -57,17 +60,16 @@ function init()
 	
 	var cube = new THREE.Mesh( geometry, material2 );
 
-	camera.position.x = 0;
-	camera.position.y = 0;
-	camera.position.z = 100;
+
 	cube.position.z = 0;
 	
 
 
 	var material3 = new THREE.ShaderMaterial({
-        // uniforms: {
-        //     res: { value: new THREE.Vector2() }
-        // },
+		// pointSize represents the number of pixels which its side will be occupying.
+        uniforms: {
+            pointSize: { value: 500 },
+        },
         vertexShader: getShader( 'generalVert' ),
         fragmentShader: getShader( 'generalFrag' ),
     });
@@ -77,27 +79,30 @@ function init()
     
 	
 
-	var size2 = 10;
+	var size2 = 600;
 	var vertices3 = new Float32Array( [
 		-size2, size2,  0,
 		-size2, -size2,  0,
 	 	size2, -size2,  0,
 	 	size2,  size2,  0,
 	] );
+	var vertices4 = new Float32Array( [
+		0,0,0,
+	]);
+
+
 	var geometry2 = new THREE.BufferGeometry();
-	geometry2.addAttribute( 'position', new THREE.BufferAttribute(vertices, 3 ) );
+	geometry2.addAttribute( 'position', new THREE.BufferAttribute(vertices4, 3 ) );
 
 	var geometry3 = new THREE.BufferGeometry();
 
 	geometry3.setIndex([0,1,2, 0, 2,3])
     geometry3.addAttribute('position', new THREE.BufferAttribute( vertices3, 3 ));
     var points1 = new THREE.Points( geometry2, material3 );   
-    //console.log(points1);
-    //points1.position.z = 99;
-	var mesh3 = new THREE.Mesh(geometry3, material3);
 	scene.add(points1);
-	//mesh3.position.z = 99;
-	scene.add(mesh3);
+	
+	// var mesh3 = new THREE.Mesh(geometry3, material3);
+	// scene.add(mesh3);
 	renderer.render( scene, camera );
 }
 
