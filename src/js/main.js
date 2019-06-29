@@ -1,8 +1,14 @@
-$(document).ready(init());
+//$(document).ready(init());
 function max(a, b) 
 {
 	return a > b? a : b;
 }
+var scene;
+var renderer;
+var camera;
+var geometry_for_points;
+var points1;
+var prevTime;
 
 function add_objects(scene) {
     const scope_ysize = 200.0;
@@ -10,9 +16,6 @@ function add_objects(scene) {
     const magnitude = 1;
     const step_size = 1 * magnitude;
     const particle_size = 0.49 * magnitude;
-
-    var vertices_size = 15;
-    console.log(vertices_size);
     var vertices = [];
 	var geometry_for_meshs = new THREE.BufferGeometry();
 	var is_mesh_rendering = false;
@@ -28,10 +31,9 @@ function add_objects(scene) {
 
     for (var i = -scope_xsize / 2; i <= scope_xsize / 2; i += step_size) {
     	for (var j = -scope_ysize / 2; j <= scope_ysize / 2; j += step_size) {
-    		vertices[vertices_size] = i;
-    		vertices[vertices_size + 1] = j;
-    		vertices[vertices_size + 2] = 0;
-    		vertices_size += 3;
+    		vertices.push(i);
+    		vertices.push(j);
+    		vertices.push(0);
     		//console.log(i, j);
     		if (is_mesh_rendering) {
 				var vertices_mesh = new Float32Array( [
@@ -48,27 +50,38 @@ function add_objects(scene) {
     	}
     }
     var vertices_for_points = new Float32Array(vertices);
-    var geometry_for_points = new THREE.BufferGeometry();
+    geometry_for_points = new THREE.BufferGeometry();
     console.log(vertices);
 	geometry_for_points.addAttribute( 'position', new THREE.BufferAttribute(vertices_for_points, 3 ) );
 
-    var points1 = new THREE.Points( geometry_for_points, material3 );   
+    points1 = new THREE.Points( geometry_for_points, material3 );   
 	scene.add(points1);
-		// var mesh3 = new THREE.Mesh(geometry3, material3);
+	// var mesh3 = new THREE.Mesh(geometry3, material3);
 	// scene.add(mesh3);
 }
 
+var animate = 
+	function (time) {
+		requestAnimationFrame( animate );
+		console.log(points1.position.y);
+		var deltaTime = prevTime === undefined ? 0 : (time - prevTime) / 1000;
+		points1.position.y += deltaTime * -2.0;
 
+		renderer.render( scene, camera );
+		prevTime = time;
+	};
+
+			
 function init() 
 {
 	var display = $('#display')[0];
-    var scene = new THREE.Scene();
-    var camera = new THREE.PerspectiveCamera( 90, 800 / 600, 0.1, 1000 );
-    	camera.position.x = 0;
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera( 90, 800 / 600, 0.1, 1000 );
+    camera.position.x = 0;
 	camera.position.y = 0;
 	camera.position.z = 600;
 
-	var renderer = new THREE.WebGLRenderer();
+	renderer = new THREE.WebGLRenderer();
 	var width = max(display.clientWidth, 100);
     var height = max(display.clientHeight, 100);
     renderer.setSize(width, height);
@@ -76,7 +89,10 @@ function init()
 	
 
 	add_objects(scene);
-
 	renderer.render( scene, camera );
 }
 
+
+
+init();
+animate();
