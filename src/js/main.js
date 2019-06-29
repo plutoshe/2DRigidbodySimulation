@@ -4,6 +4,61 @@ function max(a, b)
 	return a > b? a : b;
 }
 
+function add_objects(scene) {
+    const scope_ysize = 200.0;
+    const scope_xsize = 400.0;
+    const magnitude = 1;
+    const step_size = 1 * magnitude;
+    const particle_size = 0.49 * magnitude;
+
+    var vertices_size = 15;
+    console.log(vertices_size);
+    var vertices = [];
+	var geometry_for_meshs = new THREE.BufferGeometry();
+	var is_mesh_rendering = false;
+
+	var material3 = new THREE.ShaderMaterial({
+		// pointSize represents the number of pixels which its side will be occupying.
+        uniforms: {
+            pointSize: { value: particle_size },
+        },
+        vertexShader: getShader( 'generalVert' ),
+        fragmentShader: getShader( 'generalFrag' ),
+    });
+
+    for (var i = -scope_xsize / 2; i <= scope_xsize / 2; i += step_size) {
+    	for (var j = -scope_ysize / 2; j <= scope_ysize / 2; j += step_size) {
+    		vertices[vertices_size] = i;
+    		vertices[vertices_size + 1] = j;
+    		vertices[vertices_size + 2] = 0;
+    		vertices_size += 3;
+    		//console.log(i, j);
+    		if (is_mesh_rendering) {
+				var vertices_mesh = new Float32Array( [
+					i - particle_size, j + particle_size,  0,
+					i - particle_size, j - particle_size,  0,
+				 	i + particle_size, j - particle_size,  0,
+				 	i + particle_size, j + particle_size,  0,
+				] );
+				geometry_for_meshs.setIndex([0,1,2, 0, 2,3])
+				geometry_for_meshs.addAttribute('position', new THREE.BufferAttribute( vertices3, 3 ));			
+				var mesh3 = new THREE.Mesh(geometry_for_meshs, material3);
+				scene.add(mesh3);
+			}
+    	}
+    }
+    var vertices_for_points = new Float32Array(vertices);
+    var geometry_for_points = new THREE.BufferGeometry();
+    console.log(vertices);
+	geometry_for_points.addAttribute( 'position', new THREE.BufferAttribute(vertices_for_points, 3 ) );
+
+    var points1 = new THREE.Points( geometry_for_points, material3 );   
+	scene.add(points1);
+		// var mesh3 = new THREE.Mesh(geometry3, material3);
+	// scene.add(mesh3);
+}
+
+
 function init() 
 {
 	var display = $('#display')[0];
@@ -18,91 +73,10 @@ function init()
     var height = max(display.clientHeight, 100);
     renderer.setSize(width, height);
 	display.appendChild(renderer.domElement);
-	// var material = new THREE.ShaderMaterial({
-
- //        // uniforms: {
- //        //     res: { value: new THREE.Vector2() }
- //        // },
- //        vertexShader: getShader( 'generalVert' ),
- //        fragmentShader: getShader( 'generalFrag' ),
- //        // defines: this.getDefines()
- //    });
-
-	var geometry = new THREE.Geometry();
-	var size = 100 - 50;
-	geometry.vertices.push(
-		new THREE.Vector3( -size,  size, 0 ),
-		new THREE.Vector3( -size, -size, 0 ),
-		new THREE.Vector3(  size, -size, 0 ),
-		new THREE.Vector3(  size, size, 0 ),
-	); 
-
-	geometry.faces.push( new THREE.Face3( 0, 1, 2 ), new THREE.Face3( 0, 2, 3) );
-	var geometry1 = new THREE.BufferGeometry();
-// create a simple square shape. We duplicate the top left and bottom right
-// vertices because each vertex needs to appear once per triangle.
-	var vertices = new Float32Array( [
-		-size, -size,  0,
-	 	size, -size,  0,
-	 	size,  size,  0,
-
-	 	size,  size,  0,
-		-size,  size,  0,
-		-size, -size,  0
-	] );
-
-// itemSize = 3 because there are 3 values (components) per vertex
-	geometry1.addAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
-	var material1 = new THREE.MeshBasicMaterial( { color: 0xff0000 } );
-	var material2 = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
-	var mesh = new THREE.Mesh( geometry1, material1 );
-	//geometry.computeBoundingSphere();
-	
-	var cube = new THREE.Mesh( geometry, material2 );
-
-
-	cube.position.z = 0;
 	
 
+	add_objects(scene);
 
-	var material3 = new THREE.ShaderMaterial({
-		// pointSize represents the number of pixels which its side will be occupying.
-        uniforms: {
-            pointSize: { value: 500 },
-        },
-        vertexShader: getShader( 'generalVert' ),
-        fragmentShader: getShader( 'generalFrag' ),
-    });
-
-
-	
-    
-	
-
-	var size2 = 600;
-	var vertices3 = new Float32Array( [
-		-size2, size2,  0,
-		-size2, -size2,  0,
-	 	size2, -size2,  0,
-	 	size2,  size2,  0,
-	] );
-	var vertices4 = new Float32Array( [
-		0,0,0,
-	]);
-
-
-	var geometry2 = new THREE.BufferGeometry();
-	geometry2.addAttribute( 'position', new THREE.BufferAttribute(vertices4, 3 ) );
-
-	var geometry3 = new THREE.BufferGeometry();
-
-	geometry3.setIndex([0,1,2, 0, 2,3])
-    geometry3.addAttribute('position', new THREE.BufferAttribute( vertices3, 3 ));
-    var points1 = new THREE.Points( geometry2, material3 );   
-	scene.add(points1);
-	
-	// var mesh3 = new THREE.Mesh(geometry3, material3);
-	// scene.add(mesh3);
 	renderer.render( scene, camera );
 }
 
