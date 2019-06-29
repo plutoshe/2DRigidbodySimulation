@@ -21,11 +21,21 @@ function readTextFile(file)
 
 generalVert = readTextFile('../../glsl/generalVert.glsl');
 generalFrag = readTextFile('../../glsl/generalFrag.glsl');
+textureSetVert = readTextFile("../../glsl/textureSetVert.glsl");
+textureSetFrag = readTextFile("../../glsl/textureSetFrag.glsl");
+drawingVert = readTextFile("../../glsl/drawingVert.glsl");
+drawingFrag = readTextFile("../../glsl/drawingFrag.glsl");
+shared = readTextFile("../../glsl/shared.glsl");
 var shaders = {
 	generalVert,
 	generalFrag,
+	textureSetVert,
+	textureSetFrag,
+    drawingVert,
+    drawingFrag,
+	shared,
 }
 
 function getShader(id){
-  return shaders[id];
+  return shared + shaders[id];
 }
