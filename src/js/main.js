@@ -36,14 +36,16 @@ var settingTexture = function(renderTarget, position, bodyIndex, data, w, h) {
 	settingGeometry.addAttribute("bodyIndex",  bodyIndex); //
 	console.log(data);
 	settingGeometry.addAttribute("data", data); // new THREE.BufferAttribute(new Float32Array(ver))
+	// settingGeometry.setDrawRange(0,1);
+	//this.onePointPerBodyGeometry.setDrawRange( 0, count );
 	var settingTextureMesh = new THREE.Points(settingGeometry, settingMaterial);
 	var settingScene = new THREE.Scene();
 	//renderer.setRenderTarget(renderTarget);
 	settingScene.add(settingTextureMesh);
 	renderer.clear();
 	renderer.setRenderTarget(renderTarget);
-	renderer.clear();
-	renderer.render(settingScene, camera);
+	
+	renderer.render(settingScene, fullscreenCamera);
 	//scene.add(settingTextureMesh);
 	renderer.setRenderTarget(null);
 	renderer.clear();
@@ -139,50 +141,50 @@ function add_objects(scene) {
 	//renderer.setRenderTarget(null);
 
 	// drawing
-	// var materialForDrawing = new THREE.ShaderMaterial({
-	// 	uniforms: {
- //            pointSize: { value: particle_size },
- //            res: {value: new THREE.Vector2(sideSizeX, sideSizeY)},
- //            posTex: {value: null},
- //            screen: {value: new THREE.Vector2(800, 600)},
- //        },
- //        vertexShader: getShader( 'drawingVert' ),
- //        fragmentShader: getShader( 'drawingFrag' ),
-	// });
-	// materialForDrawing.uniforms.posTex.value = tex.texture;
-	// console.log(tex.texture);
-	// var geometryForDrawing = new THREE.BufferGeometry();
-	// geometryForDrawing.addAttribute('position', new THREE.BufferAttribute(vertices_for_points, 3 ) );
-	// console.log(index);
-	// geometryForDrawing.addAttribute("bodyIndex",  new THREE.BufferAttribute(new Float32Array(index), 1)); //
-
-	// var pointsForPosition = new THREE.Points(geometryForDrawing, materialForDrawing);
-	// scene.add(pointsForPosition);
-	// renderer.render( scene, camera );
-	var i = j = 0;
-	var aparticle_size = 600.0;
-	var vertices_mesh = new Float32Array( [
-		i - aparticle_size, j + aparticle_size,  0,
-		i - aparticle_size, j - aparticle_size,  0,
-	 	i + aparticle_size, j - aparticle_size,  0,
-	 	i + aparticle_size, j + aparticle_size,  0,
-	] );
-	geometry_for_meshs.setIndex([0,1,2, 0, 2,3])
-	geometry_for_meshs.addAttribute('position', new THREE.BufferAttribute( vertices_mesh, 3 ));			
-
-	var material4 = new THREE.ShaderMaterial({
-		// pointSize represents the number of pixels which its side will be occupying.
-        uniforms: {
+	var materialForDrawing = new THREE.ShaderMaterial({
+		uniforms: {
             pointSize: { value: particle_size },
-            texture: { value: tex.texture},
+            res: {value: new THREE.Vector2(sideSizeX, sideSizeY)},
+            posTex: {value: null},
+            screen: {value: new THREE.Vector2(800, 600)},
         },
-        vertexShader: getShader( 'generalVert' ),
-        fragmentShader: getShader( 'generalFrag' ),
-    });
-	var mesh3 = new THREE.Mesh(geometry_for_meshs, material4);
-	mesh3.position.z = 0;
-	scene.add(mesh3);
+        vertexShader: getShader( 'drawingVert' ),
+        fragmentShader: getShader( 'drawingFrag' ),
+	});
+	materialForDrawing.uniforms.posTex.value = tex.texture;
+	console.log(tex.texture);
+	var geometryForDrawing = new THREE.BufferGeometry();
+	geometryForDrawing.addAttribute('position', new THREE.BufferAttribute(vertices_for_points, 3 ) );
+	console.log(index);
+	geometryForDrawing.addAttribute("bodyIndex",  new THREE.BufferAttribute(new Float32Array(index), 1)); //
+
+	var pointsForPosition = new THREE.Points(geometryForDrawing, materialForDrawing);
+	scene.add(pointsForPosition);
 	renderer.render( scene, camera );
+	// var i = j = 0;
+	// var aparticle_size = 600.0;
+	// var vertices_mesh = new Float32Array( [
+	// 	i - aparticle_size, j + aparticle_size,  0,
+	// 	i - aparticle_size, j - aparticle_size,  0,
+	//  	i + aparticle_size, j - aparticle_size,  0,
+	//  	i + aparticle_size, j + aparticle_size,  0,
+	// ] );
+	// geometry_for_meshs.setIndex([0,1,2, 0, 2,3])
+	// geometry_for_meshs.addAttribute('position', new THREE.BufferAttribute( vertices_mesh, 3 ));			
+
+	// var material4 = new THREE.ShaderMaterial({
+	// 	// pointSize represents the number of pixels which its side will be occupying.
+ //        uniforms: {
+ //            pointSize: { value: particle_size },
+ //            texture: { value: tex.texture},
+ //        },
+ //        vertexShader: getShader( 'generalVert' ),
+ //        fragmentShader: getShader( 'generalFrag' ),
+ //    });
+	// var mesh3 = new THREE.Mesh(geometry_for_meshs, material4);
+	// mesh3.position.z = 0;
+	// scene.add(mesh3);
+	// renderer.render( scene, camera );
 }
 
 var animate = 
