@@ -22,8 +22,9 @@ class particleCollisionSystem {
 		this.scopeYsize = 200.0;
 		this.scopeXsize = 400.0;
 		this.magnitude = 100;
-		this.stepSize = 1 * magnitude;
-		this.particleSize = 0.49 * magnitude;
+		this.stepSize = 1 * this.magnitude;
+		this.particleSize = 0.49 * this.magnitude;
+		this.geometries = {};
 		this.geometries = {};
 		this.meshs = {};
 		this.materials = {};
@@ -31,6 +32,7 @@ class particleCollisionSystem {
 		this.cameras = {};
 		this.textures = {};
 		this.vertices = {};
+		this.buffers = {};
 	}
 
   	init() {
@@ -45,10 +47,10 @@ class particleCollisionSystem {
 		this.cameras.majorCamera.position.z = 600;
 
 		this.renderer = new THREE.WebGLRenderer();
-		this.width = max(display.clientWidth, 100);
-	    this.height = max(display.clientHeight, 100);
-	    this.renderer.setSize(width, height);
-		display.appendChild(renderer.domElement);
+		this.width = this.max(display.clientWidth, 100);
+	    this.height = this.max(display.clientHeight, 100);
+	    this.renderer.setSize(this.width, this.height);
+		display.appendChild(this.renderer.domElement);
 
 		this.addObjects(this.scenes.majorScene);
 		this.initUpdatePhysics();
@@ -77,22 +79,19 @@ class particleCollisionSystem {
 	        fragmentShader: getShader( 'textureSetFrag' ),
 		});
 		this.geometries.settingGeometry = new THREE.BufferGeometry();
-		this.geometries.settingGeometry.addAttribute("position",  position); //
-		this.geometries.settingGeometry.addAttribute("bodyIndex",  bodyIndex); //
-		this.geometries.settingGeometry.addAttribute("data", data); // new THREE.BufferAttribute(new Float32Array(ver))
-
-		this.meshs.settingTextureMesh = new THREE.Points(settingGeometry, settingMaterial);
+		this.geometries.settingGeometry.addAttribute("position",  position); 
+		this.geometries.settingGeometry.addAttribute("bodyIndex",  bodyIndex); 
+		this.geometries.settingGeometry.addAttribute("data", data); 
+		this.meshs.settingTextureMesh = new THREE.Points(this.geometries.settingGeometry, this.materials.settingMaterial);
 
 		this.scenes.settingScene = new THREE.Scene();
-		this.scenes.settingScene.value.add(settingTextureMesh);
+		this.scenes.settingScene.add(this.meshs.settingTextureMesh);
 
 		this.renderer.clear();
 		this.renderer.setRenderTarget(renderTarget);
 		this.renderer.render(this.scenes.settingScene, this.cameras.fullscreenCamera);
 		this.renderer.setRenderTarget(null);
 		this.renderer.clear();
-
-		// renderer.render(settingScene, camera);
 	}
 
 	swapBuffer() {
@@ -104,27 +103,27 @@ class particleCollisionSystem {
 	drawing() {
 		this.materials.materialForDrawing = new THREE.ShaderMaterial({
 			uniforms: {
-	            pointSize: { value: particleSize },
-	            res: {value: new THREE.Vector2(sideSizeX, sideSizeY)},
+	            pointSize: { value: this.particleSize },
+	            res: {value: new THREE.Vector2(this.sideSizeX, this.sideSizeY)},
 	            posTex: {value: null},
 	            screen: {value: new THREE.Vector2(800, 600)},
 	        },
 	        vertexShader: getShader( 'drawingVert' ),
 	        fragmentShader: getShader( 'drawingFrag' ),
 		});
-		this.materials.materialForDrawing.uniforms.posTex.value = posTex1.texture;
+		this.materials.materialForDrawing.uniforms.posTex.value = this.textures.posTex1.texture;
 		this.geometries.geometryForDrawing = new THREE.BufferGeometry();
-		this.geomerties.geometryForDrawing.addAttribute('position', new THREE.BufferAttribute(this.vertices.verticesForPoints, 3 ) );
-		this.geomerties.geometryForDrawing.addAttribute("bodyIndex",  new THREE.BufferAttribute(new Float32Array(this.vertices.index), 1)); 
+		this.geometries.geometryForDrawing.addAttribute('position', this.buffers.startingVertices);
+		this.geometries.geometryForDrawing.addAttribute("bodyIndex", this.buffers.index); 
 
-		this.meshs.drawingPosition = new THREE.Points(geometryForDrawing, materialForDrawing);
-		this.scenes.majorScene.scene.add(pointsForPosition);
+		this.meshs.drawingPosition = new THREE.Points(this.geometries.geometryForDrawing, this.materials.materialForDrawing);
+		this.scenes.majorScene.add(this.meshs.drawingPosition);
 		this.renderer.render(this.scenes.majorScene, this.cameras.majorCamera);
 	}
 
-	add_objects(scene) {
+	addObjects(scene) {
 	    var isMeshRendering = false;
-		this.geometrices.geometryForMeshs = new THREE.BufferGeometry();
+		this.geometries.geometryForMeshs = new THREE.BufferGeometry();
 		this.materials.generalMaterial = new THREE.ShaderMaterial({
 			// pointSize represents the number of pixels which its side will be occupying.
 	        uniforms: {
@@ -138,11 +137,11 @@ class particleCollisionSystem {
 		this.vertices.startingPositionData = [];
 		this.vertices.index = [];
 		var id = 0;
-	    for (var i = -scopeXsize / 2; i <= scopeXsize / 2; i += stepSize) {
-	    	sideSizeX++;
-	    	sideSizeY = 0;
-	    	for (var j = -scopeYsize / 2; j <= scopeYsize / 2; j += stepSize) {
-	    		sideSizeY++;
+	    for (var i = -this.scopeXsize / 2; i <= this.scopeXsize / 2; i += this.stepSize) {
+	    	this.sideSizeX++;
+	    	this.sideSizeY = 0;
+	    	for (var j = -this.scopeYsize / 2; j <= this.scopeYsize / 2; j += this.stepSize) {
+	    		this.sideSizeY++;
 	    		this.vertices.startingGeneralVertices.push(i); 
 	    		this.vertices.startingGeneralVertices.push(j); 
 	    		this.vertices.startingGeneralVertices.push(0);
@@ -167,30 +166,34 @@ class particleCollisionSystem {
 				}
 	    	}
 	    }
-	    this.geometrices.geometryForPoints = new THREE.BufferGeometry();
+	    this.geometries.geometryForPoints = new THREE.BufferGeometry();
 		
 		this.buffers.startingVertices = new THREE.BufferAttribute(new Float32Array(this.vertices.startingGeneralVertices), 3);
-		this.buffers.index = new THREE.BufferAttribute(new Float32Array(this.vertices.index));
+		this.buffers.index = new THREE.BufferAttribute(new Float32Array(this.vertices.index), 1);
 
-		this.geometrices.geometryForPoints.addAttribute('position', this.buffers.startingVertices);
-		initTextures();
-		
+		this.geometries.geometryForPoints.addAttribute('position', this.buffers.startingVertices);
+		// this.meshs.tmpMesh = new THREE.Points(this.geometries.geometryForPoints, this.materials.generalMaterial);
+		// this.scenes.majorScene.add(this.meshs.tmpMesh);
+		// this.renderer.render(this.scenes.majorScene, this.cameras.majorCamera);
+
+		this.initTextures();
 		// setPositionTexture
-		settingTexture(this.textures.posTex1, 
+		this.settingTexture(
+			this.textures.posTex1, 
 			this.buffers.startingVertices,
 			this.buffers.index, 
 			new THREE.BufferAttribute(new Float32Array(this.vertices.startingPositionData), 4), 
-			sideSizeX, 
-			sideSizeY);
+			this.sideSizeX, 
+			this.sideSizeY);
 
 		// drawing
-		drawing();
+		this.drawing();
 	}
 
 	initTextures() {
 		var type = THREE.FloatType; //( /(iPad|iPhone|iPod)/g.test( navigator.userAgent ) ) ? THREE.HalfFloatType : THREE.FloatType;
-		this.textures.posTex1 = createRenderTarget(sideSizeX, sideSizeY, type);
-		this.textures.posTex2 = createRenderTarget(sideSizeX, sideSizeY, type);
+		this.textures.posTex1 = this.createRenderTarget(this.sideSizeX, this.sideSizeY, type);
+		this.textures.posTex2 = this.createRenderTarget(this.sideSizeX, this.sideSizeY, type);
 		// this.textures.relativePosTex1 = createRenderTarget(sideSizeX, sideSizeY, THREE.FloatType);
 		// this.textures.relativePosTex2 = createRenderTarget(sideSizeX, sideSizeY, THREE.FloatType);
 		// this.textures.velocityTex1 = createRenderTarget(sideSizeX, sideSizeY, THREE.FloatType);
@@ -217,42 +220,42 @@ class particleCollisionSystem {
 			vertexShader: getShader("physicsUpdateVert"),
 			fragmentShader: getShader("physicsUpdateFrag"),
 		});
-		this.geometrices.geometryForUpdatePhysics = new THREE.BufferGeometry();
-		this.geometrices.geometryForUpdatePhysics.addAttribute(
+		this.geometries.geometryForUpdatePhysics = new THREE.BufferGeometry();
+		this.geometries.geometryForUpdatePhysics.addAttribute(
 			"position", 
 			this.buffers.startingVertices);
 			//new THREE.BufferAttribute(new Float32Array(this.sideSizeY * this.sideSizeX * 3), 3));
-		this.geometrices.geometryForUpdatePhysics.addAttribute(
+		this.geometries.geometryForUpdatePhysics.addAttribute(
 			"bodyIndex",
 			this.buffers.index,
 		);
-		this.meshs.meshForUpdate = new THREE.Points(geometryForUpdatePhysics, materialForUpdatePhysics);
+		this.meshs.meshForUpdate = new THREE.Points(this.geometries.geometryForUpdatePhysics, this.materials.materialForUpdatePhysics);
 		this.scenes.updatePhysicsScene = new THREE.Scene();
 		this.scenes.updatePhysicsScene.add(this.meshs.meshForUpdate);
 
 	}
 
 	updatePhysics() {
-		this.materials.materialForUpdatePhysics.uniforms.posTex.value = posTex1.texture;
-		this.materials.materialForUpdatePhysics.uniforms.deltaTime.value = deltaTime;
+		this.materials.materialForUpdatePhysics.uniforms.posTex.value = this.textures.posTex1.texture;
+		this.materials.materialForUpdatePhysics.uniforms.deltaTime.value = this.deltaTime;
 		this.materials.materialForUpdatePhysics.needsUpdate = true;
 		// geometryForUpdatePhysics.attributes.position.needsUpdate = true;
 		// geometryForUpdatePhysics.setDrawRange( 0, sideSizeX * sideSizeY);
 		
 		// attributes.data.needsUpdate
-		this.renderer.setRenderTarget(this.texture.posTex2);
+		this.renderer.setRenderTarget(this.textures.posTex2);
 		this.renderer.render(this.scenes.updatePhysicsScene, this.cameras.fullscreenCamera);
 		this.renderer.setRenderTarget(null);
 	}
 
 	animate(time) {
-		requestAnimationFrame( this.animate );
-		this.deltaTime = this.prevTime === undefined ? 0 : (time - prevTime) / 1000;
+		requestAnimationFrame((time) => this.animate(time));
+		this.deltaTime = this.prevTime === undefined ? 0 : (time - this.prevTime) / 1000;
 		this.prevTime = time;
 
-		updatePhysics();
-		swapBuffer();
-		drawing();
+		this.updatePhysics();
+		this.swapBuffer();
+		this.drawing();
 	};
 
 };	

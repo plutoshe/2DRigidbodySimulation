@@ -8,9 +8,5 @@ void main() {
 	uv += 0.5 / res;
 	vData = data;
 	gl_PointSize = 1.0;
-	// * isVec4 + (1- isVec4) * vec4(position, 1);
-	// vec4 sx = data;
-	// sx.x /= 800.0;
-	// sx.y /= 600.0;
 	gl_Position = vec4(2.0*uv-1.0, 0, 1);
 }
