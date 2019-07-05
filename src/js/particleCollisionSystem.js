@@ -35,27 +35,6 @@ class particleCollisionSystem {
 		this.buffers = {};
 	}
 
-  	init() {
-  		var display = $('#display')[0];
-
-  		this.scenes.majorScene = new THREE.Scene();
-
-  		this.cameras.fullscreenCamera = new THREE.Camera();
-	    this.cameras.majorCamera = new THREE.PerspectiveCamera( 90, 800 / 600, 0.1, 1000 );
-	    this.cameras.majorCamera.position.x = 0;
-		this.cameras.majorCamera.position.y = 0;
-		this.cameras.majorCamera.position.z = 600;
-
-		this.renderer = new THREE.WebGLRenderer();
-		this.width = this.max(display.clientWidth, 100);
-	    this.height = this.max(display.clientHeight, 100);
-	    this.renderer.setSize(this.width, this.height);
-		display.appendChild(this.renderer.domElement);
-
-		this.addObjects(this.scenes.majorScene);
-		this.initUpdatePhysics();
-  	}
-
 	max(a, b) 
 	{
 		return a > b? a : b;
@@ -106,7 +85,7 @@ class particleCollisionSystem {
 	            pointSize: { value: this.particleSize },
 	            res: {value: new THREE.Vector2(this.sideSizeX, this.sideSizeY)},
 	            posTex: {value: null},
-	            screen: {value: new THREE.Vector2(800, 600)},
+	            screen: {value: new THREE.Vector2(this.width, this.height)},
 	        },
 	        vertexShader: getShader( 'drawingVert' ),
 	        fragmentShader: getShader( 'drawingFrag' ),
@@ -194,6 +173,7 @@ class particleCollisionSystem {
 		var type = THREE.FloatType; //( /(iPad|iPhone|iPod)/g.test( navigator.userAgent ) ) ? THREE.HalfFloatType : THREE.FloatType;
 		this.textures.posTex1 = this.createRenderTarget(this.sideSizeX, this.sideSizeY, type);
 		this.textures.posTex2 = this.createRenderTarget(this.sideSizeX, this.sideSizeY, type);
+
 		// this.textures.relativePosTex1 = createRenderTarget(sideSizeX, sideSizeY, THREE.FloatType);
 		// this.textures.relativePosTex2 = createRenderTarget(sideSizeX, sideSizeY, THREE.FloatType);
 		// this.textures.velocityTex1 = createRenderTarget(sideSizeX, sideSizeY, THREE.FloatType);
@@ -213,7 +193,7 @@ class particleCollisionSystem {
 		this.materials.materialForUpdatePhysics = new THREE.ShaderMaterial({
 			uniforms: {
 				res: {value: new THREE.Vector2(this.sideSizeX, this.sideSizeY)},
-				screen: {value: new THREE.Vector2(800, 600)},
+				screen: {value: new THREE.Vector2(this.width, this.height)},
 				posTex: {value: this.textures.posTex1.texture},
 				deltaTime: {value: this.deltaTime},
 			},
@@ -248,15 +228,108 @@ class particleCollisionSystem {
 		this.renderer.setRenderTarget(null);
 	}
 
-	animate(time) {
-		requestAnimationFrame((time) => this.animate(time));
+	convertParticleToCell() {
+
+
+
+		// this.materials.materialConvertParticleToCell = new THREE.ShaderMaterial{
+		// 	uniforms: {},
+		// 	vertexShader: getShader("convertParticleToCellVert"),
+		// 	fragmentShader: getShader("convertParticleToCellFrag"),
+		// }
+		// this.geometries.geometryConvertParticelToCell = new THREE.BufferGeometry();
+		// this.geometries.addAttribute();
+		// var gl = this.renderer.context;
+		// var buffers = this.renderer.state.buffers;
+		// this.renderer.clearStencil();
+		// buffers.stencil.setTest(true);
+		// buffers.stencil.setFunc(gl.EQUAL, 3, 0xffffffff);
+  //       buffers.stencil.setOp(gl.INCR, gl.INCR, gl.INCR);
+  //       buffers.stencil.setClear(0);
+  //       buffers.stencil.setTest(false); 
+	        
+	}
+
+	testStencil() {
+		//this.textures.cellTex = this.createRenderTarget(2, 2);
+
+		var size = 4;
+		var tvertices =  new Float32Array( 3 * size);
+        var particleIndices = new Float32Array( size);
+        for(var i = 0; i < size; i++){
+            particleIndices[i] =  2; // Need to do this because there's no way to get the vertex index in webgl1 shaders...
+        }
+
+        var amaterial = new THREE.ShaderMaterial({
+        	vertexShader : getShader("testVert"),
+        	fragmentShader : getShader("testFrag"),
+        });
+
+		var ageometry = new THREE.BufferGeometry();
+		ageometry.addAttribute("position", new THREE.BufferAttribute(tvertices, 3));
+		ageometry.addAttribute("particleIndex", new THREE.BufferAttribute(particleIndices, 1));
+		var amesh = new THREE.Points(ageometry, amaterial);
+		var ascene = new THREE.Scene();
+		ascene.add(amesh);
+
+		var gl = this.renderer.context;
+		var buffers = this.renderer.state.buffers;
+		this.renderer.clearStencil();
+		buffers.stencil.setTest(true);
+		buffers.stencil.setFunc(gl.EQUAL, 3, 0xffffffff);
+        buffers.stencil.setOp(gl.INCR, gl.INCR, gl.INCR);
+        buffers.stencil.setClear(0);
+        
+
+		this.renderer.render(ascene, this.cameras.fullscreenCamera);
+		buffers.stencil.setTest(false); 
+	}
+
+	oneStep(time) {
 		this.deltaTime = this.prevTime === undefined ? 0 : (time - this.prevTime) / 1000;
 		this.prevTime = time;
+		// this.convertParticleToCell();
+		// this.updatePhysics();
+		// this.swapBuffer();
+		this.testStencil();
+		// this.drawing();
+	}
 
-		this.updatePhysics();
-		this.swapBuffer();
-		this.drawing();
+	animate(time) {
+		requestAnimationFrame((time) => this.animate(time));
+		//this.oneStep(time);
 	};
+
+	initCells() {
+		this.textures.cellTex = 
+			this.createRenderTarget(
+				this.width / this.particleSize * 2, 
+				this.sideSizeY / this.particleSize * 2);
+	}
+
+	init() {
+  		var display = $('#display')[0];
+
+  		this.scenes.majorScene = new THREE.Scene();
+  		this.width = 800;
+  		this.height = 600;
+  		this.cameras.fullscreenCamera = new THREE.Camera();
+	    this.cameras.majorCamera = new THREE.PerspectiveCamera( 90, this.width / this.height, 0.1, 1000 );
+	    this.cameras.majorCamera.position.x = 0;
+		this.cameras.majorCamera.position.y = 0;
+		this.cameras.majorCamera.position.z = this.height;
+
+		this.renderer = new THREE.WebGLRenderer();
+		// this.width = this.max(display.clientWidth, 100);
+		// this.height = this.max(display.clientHeight, 100);
+	    this.renderer.setSize(this.width, this.height);
+		display.appendChild(this.renderer.domElement);
+
+		this.addObjects(this.scenes.majorScene);
+		this.initUpdatePhysics();
+		this.initCells();
+		this.testStencil();
+  	}
 
 };	
 

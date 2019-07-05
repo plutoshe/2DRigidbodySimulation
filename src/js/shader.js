@@ -27,7 +27,11 @@ drawingVert = readTextFile("../../glsl/drawingVert.glsl");
 drawingFrag = readTextFile("../../glsl/drawingFrag.glsl");
 physicsUpdateVert = readTextFile("../../glsl/physicsUpdateVert.glsl");
 physicsUpdateFrag = readTextFile("../../glsl/physicsUpdateFrag.glsl");
+testFrag = readTextFile("../../glsl/testFrag.glsl");
+testVert = readTextFile("../../glsl/testVert.glsl");
 shared = readTextFile("../../glsl/shared.glsl");
+
+
 var shaders = {
 	generalVert,
 	generalFrag,
@@ -37,6 +41,8 @@ var shaders = {
     physicsUpdateFrag,
     drawingVert,
     drawingFrag,
+    testFrag,
+    testVert,
 	shared,
 }
 
