@@ -8,7 +8,7 @@ router.get("/", function(req,res) {
 });
 
 router.get("/test", function(req,res) {
-	res.sendFile(path.join(__dirname + "/test2.html"));
+	res.sendFile(path.join(__dirname + "/test3.html"));
 });
 	
 app.use("/lib", express.static(__dirname + "/lib"));

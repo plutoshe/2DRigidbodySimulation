@@ -257,32 +257,135 @@ class particleCollisionSystem {
 		var tvertices =  new Float32Array( 3 * size);
         var particleIndices = new Float32Array( size);
         for(var i = 0; i < size; i++){
-            particleIndices[i] =  2; // Need to do this because there's no way to get the vertex index in webgl1 shaders...
+            particleIndices[i] =  i; // Need to do this because there's no way to get the vertex index in webgl1 shaders...
         }
 
         var amaterial = new THREE.ShaderMaterial({
+        	uniforms: {
+        		tmpParticleSize: { value: 0 },
+        	},
         	vertexShader : getShader("testVert"),
         	fragmentShader : getShader("testFrag"),
-        });
 
+        });
+        // amaterial.transparent = true;
 		var ageometry = new THREE.BufferGeometry();
 		ageometry.addAttribute("position", new THREE.BufferAttribute(tvertices, 3));
 		ageometry.addAttribute("particleIndex", new THREE.BufferAttribute(particleIndices, 1));
+		
 		var amesh = new THREE.Points(ageometry, amaterial);
 		var ascene = new THREE.Scene();
 		ascene.add(amesh);
-
+		// console.log( );
+		this.renderer.autoClear = false;
 		var gl = this.renderer.context;
 		var buffers = this.renderer.state.buffers;
 		this.renderer.clearStencil();
-		buffers.stencil.setTest(true);
-		buffers.stencil.setFunc(gl.EQUAL, 3, 0xffffffff);
-        buffers.stencil.setOp(gl.INCR, gl.INCR, gl.INCR);
-        buffers.stencil.setClear(0);
-        
+        this.renderer.alpha = true;
+  	  // first render
+	  {
+	  	gl.enable(gl.BLEND);
+	  	gl.enable(gl.COLOR_TABLE);
+	  	 	gl.clearColor(0,0,0,0);
+	  		// gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+	  //       gl.colorMask(true, true, true, true);
+			// gl.enable(gl.DEPTH_TEST);
+	  //       gl.depthMask(true);
+	  //       gl.depthFunc(gl.GL_LESS);
+	        // amaterial.depthTest = false;
+	        // amaterial.depthWrite = true;
+	        // amaterial.depthFunc = THREE.LessEqualDepth;
+	        // this.renderer.clearStencil();
+	  //       this.renderer.clear();
+	        gl.enable(gl.STENCIL_TEST);
+	        gl.stencilOp(gl.INCR, gl.INCR, gl.INCR);
+	        gl.stencilFunc(gl.EQUAL, 0, 0xff);
+			gl.stencilMask(0xFF);        
+	        gl.clear(gl.STENCIL_BUFFER_BIT);
 
-		this.renderer.render(ascene, this.cameras.fullscreenCamera);
-		buffers.stencil.setTest(false); 
+	        // gl.stencilMask(0xffffffff);
+	        // this.renderer.stencil = true;
+	     //    var context = renderer.context;
+
+		    // context.enable(context.STENCIL_TEST);
+		    // context.stencilFunc(context.ALWAYS, 0, 0xffffffff);
+		    // context.stencilOp(context.REPLACE, context.REPLACE, context.REPLACE);
+		    // context.clearStencil(0);
+	        // buffers.stencil.setTest(true);
+	        // buffers.stencil.setFunc(gl.EQUAL, 2, 0xffffffff);
+	        // buffers.stencil.setOp(gl.INCR, gl.INCR, gl.INCR);
+	        // buffers.stencil.setClear(0);
+	        // amaterial.depthFunc = 
+	        // buffers.stencil.setTest(false);
+	       	amesh.renderOrder = 900;
+	        amaterial.uniforms.tmpParticleSize.value = 600.0;
+			this.renderer.render(ascene, this.cameras.fullscreenCamera);
+			console.log("Finish");
+		}
+		// second render   
+		{     
+			// gl.depthMask(false);
+	  //       gl.depthFunc(gl.GREATER);
+	  		// amaterial.visible = false;
+			gl.clearStencil(0);
+    		gl.clear(gl.STENCIL_BUFFER_BIT);
+	        gl.colorMask(true, true, true, true);
+	        gl.depthMask(false);
+	        // gl.disable(gl.DEPTH_TEST);
+	        // gl.depthFunc(gl.GL_GEQUAL);
+
+	        gl.enable(gl.STENCIL_TEST);
+	        // gl.stencilOp(gl.KEEP, gl.KEEP, gl.KEEP);
+	        // gl.stencilOp(gl.INCR, gl.INCR, gl.INCR);
+	        gl.stencilFunc(gl.EQUAL, 1, 0xff);
+	        // gl.stencilOp(gl.KEEP, gl.REPLACE, gl.REPLACE);
+	        gl.stencilOp(gl.INCR, gl.INCR, gl.INCR);
+			// gl.stencilMask(0xFF);        
+	        // gl.clear(gl.STENCIL_BUFFER_BIT);
+
+			amaterial.uniforms.tmpParticleSize.value = 150.0;
+			this.renderer.clear(false, false,false);
+			this.autoClearColor = false;
+			this.renderer.render(ascene, this.cameras.fullscreenCamera);
+		}
+
+  // //       // third render
+
+  //       gl.colorMask(false, true, false, false);
+		
+		// gl.enable(gl.STENCIL_TEST);
+		// gl.stencilOp(gl.INCR, gl.INCR, gl.INCR);
+		// gl.stencilFunc(gl.EQUAL, 1, 0xff);
+		// gl.stencilMask(0xFF);        
+	 //    gl.clear(gl.STENCIL_BUFFER_BIT);
+  //       // buffers.stencil.setClear(0);
+		// amaterial.uniforms.tmpParticleSize.value = 300;
+  //       this.renderer.render(ascene, this.cameras.fullscreenCamera);
+
+  //       // // // fourth render
+  //       // gl.clearColor(0,0,0,1);
+  //       this.renderer.clearStencil();
+  //       gl.colorMask(true, false, false, false);
+  //       gl.enable(gl.STENCIL_TEST);
+		// gl.stencilOp(gl.INCR, gl.INCR, gl.INCR);
+		// gl.stencilFunc(gl.EQUAL, 0, 0xff);
+		// gl.stencilMask(0xFF);        
+	 //    gl.clear(gl.STENCIL_BUFFER_BIT);
+  //       // buffers.stencil.setClear(0);
+  //       amaterial.uniforms.tmpParticleSize = 150;
+  //       this.renderer.render(ascene, this.cameras.fullscreenCamera);
+
+        // clear status
+        // this.renderer.clearStencil();
+        // gl.colorMask(true, true, true, true);
+        // buffers.stencil.setTest(false);
+        // gl.disable(gl.DEPTH_TEST);
+
+
+
+		//gl.disable(gl.DEPTH_TEST);
+		
+		//amaterial.uniforms.tmpParticleSize.value = 
 	}
 
 	oneStep(time) {
