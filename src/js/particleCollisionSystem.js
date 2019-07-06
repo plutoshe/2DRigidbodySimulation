@@ -229,26 +229,99 @@ class particleCollisionSystem {
 	}
 
 	convertParticleToCell() {
-
-
-
-		// this.materials.materialConvertParticleToCell = new THREE.ShaderMaterial{
-		// 	uniforms: {},
-		// 	vertexShader: getShader("convertParticleToCellVert"),
-		// 	fragmentShader: getShader("convertParticleToCellFrag"),
-		// }
-		// this.geometries.geometryConvertParticelToCell = new THREE.BufferGeometry();
-		// this.geometries.addAttribute();
-		// var gl = this.renderer.context;
-		// var buffers = this.renderer.state.buffers;
-		// this.renderer.clearStencil();
-		// buffers.stencil.setTest(true);
-		// buffers.stencil.setFunc(gl.EQUAL, 3, 0xffffffff);
-  //       buffers.stencil.setOp(gl.INCR, gl.INCR, gl.INCR);
-  //       buffers.stencil.setClear(0);
-  //       buffers.stencil.setTest(false); 
-	        
+		this.materials.materialConvertParticleToCell = new THREE.ShaderMaterial{
+			uniforms: {
+				cellSize: {value: new THREE.Vector2(cellSize)},
+				gridPos: {value: new THREE.Vector3(0,0,0)},
+				particlePosTex: {value: this.texture.posTex1.texture},
+				particleSize: {value: new Vector2(sideSizeX, sideSizeY)},
+			},
+			vertexShader: getShader("convertParticleToCellVert"),
+			fragmentShader: getShader("convertParticleToCellFrag"),
+		}
+		this.geometries.geometryConvertParticelToCell = new THREE.BufferGeometry();
+		this.geometries.addAttribute();
+		var gl = this.renderer.context;
+		var buffers = this.renderer.state.buffers;
+		this.mesh.meshConvertParticleToCell = new THREE.Points(
+			this.geometries.geometryConvertParticelToCell,
+			this.materials.materialConvertParticleToCell);
+		this.scene.sceneConvertParticleToCell = new THREE.Scene();
+		this.scene.add(this.mesh.meshConvertParticleToCell);
+		particleRenderCell(
+			this.texture.cellTex, 
+			this.scene.sceneConvertParticleToCell, 
+			this.materials.materialConvertParticleToCell,
+			[2,2,2,2]);
 	}
+
+	particleRenderCell(renderTarget, ascene, amaterial, layerSize) {
+		this.renderer.autoClear = false;
+		var gl = this.renderer.context;
+		var buffers = this.renderer.state.buffers;
+		this.renderer.clearStencil();
+        this.renderer.alpha = true;  
+
+		// first render
+	  
+  	 	gl.clearColor(0,0,0,0);
+        gl.enable(gl.STENCIL_TEST);
+        gl.stencilOp(gl.INCR, gl.INCR, gl.INCR);
+        gl.stencilFunc(gl.EQUAL, 0, 0xff);
+		gl.stencilMask(0xFF);        
+        gl.clear(gl.STENCIL_BUFFER_BIT);
+        amaterial.uniforms.tmpParticleSize.value = layerSize[0];
+        this.renderer.setRenderTarget(renderTarget);
+		this.renderer.render(ascene, this.cameras.fullscreenCamera);
+		console.log("Finish");
+	
+		// second render   
+		     
+		gl.clearStencil(0);
+		gl.clear(gl.STENCIL_BUFFER_BIT);
+        gl.colorMask(false, false, true, false);
+        gl.depthMask(false);
+
+        gl.enable(gl.STENCIL_TEST);
+        gl.stencilFunc(gl.EQUAL, 1, 0xff);
+        gl.stencilOp(gl.INCR, gl.INCR, gl.INCR);
+
+		amaterial.uniforms.tmpParticleSize.value = layerSize[1];
+
+		this.renderer.clear(false, false,false);
+		this.autoClearColor = false;
+		this.renderer.render(ascene, this.cameras.fullscreenCamera);
+	
+
+		// third render
+
+        gl.colorMask(false, true, false, false);
+		gl.stencilOp(gl.INCR, gl.INCR, gl.INCR);
+		gl.stencilFunc(gl.EQUAL, 2, 0xff);
+		gl.stencilMask(0xFF);        
+	    gl.clear(gl.STENCIL_BUFFER_BIT);
+		amaterial.uniforms.tmpParticleSize.value = layerSize[2];
+        this.renderer.render(ascene, this.cameras.fullscreenCamera);
+
+        // fourth render
+        this.renderer.clearStencil();
+        gl.colorMask(true, false, false, false);
+		gl.stencilOp(gl.INCR, gl.INCR, gl.INCR);
+		gl.stencilFunc(gl.EQUAL, 3, 0xff);
+		gl.stencilMask(0xFF);        
+	    gl.clear(gl.STENCIL_BUFFER_BIT);
+        amaterial.uniforms.tmpParticleSize.value = layerSize[3];
+        this.renderer.render(ascene, this.cameras.fullscreenCamera);
+
+        // clear status
+        // this.renderer.clearStencil();
+        gl.colorMask(true, true, true, true);
+        buffers.stencil.setTest(false);
+        gl.disable(gl.STENCIL_TEST);
+		gl.disable(gl.DEPTH_TEST);
+		this.renderer.setRenderTarget(null);
+	}
+
 
 	testStencil() {
 		//this.textures.cellTex = this.createRenderTarget(2, 2);
@@ -277,105 +350,9 @@ class particleCollisionSystem {
 		var ascene = new THREE.Scene();
 		ascene.add(amesh);
 		// console.log( );
-		this.renderer.autoClear = false;
-		var gl = this.renderer.context;
-		var buffers = this.renderer.state.buffers;
-		this.renderer.clearStencil();
-        this.renderer.alpha = true;
-  	  // first render
-	  {
-	  	// gl.enable(gl.BLEND);
-	  	// gl.enable(gl.COLOR_TABLE);
-	  	 	gl.clearColor(0,0,0,0);
-	  		// gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-	  //       gl.colorMask(true, true, true, true);
-			// gl.enable(gl.DEPTH_TEST);
-	  //       gl.depthMask(true);
-	  //       gl.depthFunc(gl.GL_LESS);
-	        // amaterial.depthTest = false;
-	        // amaterial.depthWrite = true;
-	        // amaterial.depthFunc = THREE.LessEqualDepth;
-	        // this.renderer.clearStencil();
-	  //       this.renderer.clear();
-	        gl.enable(gl.STENCIL_TEST);
-	        gl.stencilOp(gl.INCR, gl.INCR, gl.INCR);
-	        gl.stencilFunc(gl.EQUAL, 0, 0xff);
-			gl.stencilMask(0xFF);        
-	        gl.clear(gl.STENCIL_BUFFER_BIT);
-
-	        // gl.stencilMask(0xffffffff);
-	        // this.renderer.stencil = true;
-	     //    var context = renderer.context;
-
-		    // context.enable(context.STENCIL_TEST);
-		    // context.stencilFunc(context.ALWAYS, 0, 0xffffffff);
-		    // context.stencilOp(context.REPLACE, context.REPLACE, context.REPLACE);
-		    // context.clearStencil(0);
-	        // buffers.stencil.setTest(true);
-	        // buffers.stencil.setFunc(gl.EQUAL, 2, 0xffffffff);
-	        // buffers.stencil.setOp(gl.INCR, gl.INCR, gl.INCR);
-	        // buffers.stencil.setClear(0);
-	        // amaterial.depthFunc = 
-	        // buffers.stencil.setTest(false);
-	       	amesh.renderOrder = 900;
-	        amaterial.uniforms.tmpParticleSize.value = 600.0;
-			this.renderer.render(ascene, this.cameras.fullscreenCamera);
-			console.log("Finish");
-		}
-		// second render   
-		{     
-			gl.clearStencil(0);
-    		gl.clear(gl.STENCIL_BUFFER_BIT);
-	        gl.colorMask(false, false, true, false);
-	        gl.depthMask(false);
-
-	        gl.enable(gl.STENCIL_TEST);
-	        gl.stencilFunc(gl.EQUAL, 1, 0xff);
-	        gl.stencilOp(gl.INCR, gl.INCR, gl.INCR);
-
-			amaterial.uniforms.tmpParticleSize.value = 450.0;
-			this.renderer.clear(false, false,false);
-			this.autoClearColor = false;
-			this.renderer.render(ascene, this.cameras.fullscreenCamera);
-		}
-
-  // //       // third render
-
-        gl.colorMask(false, true, false, false);
 		
-		gl.enable(gl.STENCIL_TEST);
-		gl.stencilOp(gl.INCR, gl.INCR, gl.INCR);
-		gl.stencilFunc(gl.EQUAL, 2, 0xff);
-		gl.stencilMask(0xFF);        
-	    gl.clear(gl.STENCIL_BUFFER_BIT);
-        // buffers.stencil.setClear(0);
-		amaterial.uniforms.tmpParticleSize.value = 300;
-        this.renderer.render(ascene, this.cameras.fullscreenCamera);
 
-        // // // fourth render
-        // gl.clearColor(0,0,0,1);
-        this.renderer.clearStencil();
-        gl.colorMask(true, false, false, false);
-        gl.enable(gl.STENCIL_TEST);
-		gl.stencilOp(gl.INCR, gl.INCR, gl.INCR);
-		gl.stencilFunc(gl.ALWAYS, 1, 0xff);
-		gl.stencilMask(0xFF);        
-	    gl.clear(gl.STENCIL_BUFFER_BIT);
-        // buffers.stencil.setClear(0);
-        amaterial.uniforms.tmpParticleSize.value = 150;
-        this.renderer.render(ascene, this.cameras.fullscreenCamera);
-
-        // clear status
-        // this.renderer.clearStencil();
-        // gl.colorMask(true, true, true, true);
-        // buffers.stencil.setTest(false);
-        // gl.disable(gl.DEPTH_TEST);
-
-
-
-		//gl.disable(gl.DEPTH_TEST);
-		
-		//amaterial.uniforms.tmpParticleSize.value = 
+        this.particleRenderCell(null, ascene, amaterial,[500,400,300,200]);
 	}
 
 	oneStep(time) {
@@ -384,7 +361,7 @@ class particleCollisionSystem {
 		// this.convertParticleToCell();
 		// this.updatePhysics();
 		// this.swapBuffer();
-		this.testStencil();
+		
 		// this.drawing();
 	}
 
@@ -394,10 +371,13 @@ class particleCollisionSystem {
 	};
 
 	initCells() {
+		this.cellSize = [
+			this.width / this.particleSize * 2,
+			this.height / this.particleSize * 2];
 		this.textures.cellTex = 
 			this.createRenderTarget(
-				this.width / this.particleSize * 2, 
-				this.sideSizeY / this.particleSize * 2);
+				this.cellSize[0], 
+				this.cellSize[1]);
 	}
 
 	init() {
