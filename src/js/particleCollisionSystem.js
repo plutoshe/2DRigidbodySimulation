@@ -284,8 +284,8 @@ class particleCollisionSystem {
         this.renderer.alpha = true;
   	  // first render
 	  {
-	  	gl.enable(gl.BLEND);
-	  	gl.enable(gl.COLOR_TABLE);
+	  	// gl.enable(gl.BLEND);
+	  	// gl.enable(gl.COLOR_TABLE);
 	  	 	gl.clearColor(0,0,0,0);
 	  		// gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 	  //       gl.colorMask(true, true, true, true);
@@ -324,26 +324,16 @@ class particleCollisionSystem {
 		}
 		// second render   
 		{     
-			// gl.depthMask(false);
-	  //       gl.depthFunc(gl.GREATER);
-	  		// amaterial.visible = false;
 			gl.clearStencil(0);
     		gl.clear(gl.STENCIL_BUFFER_BIT);
-	        gl.colorMask(true, true, true, true);
+	        gl.colorMask(false, false, true, false);
 	        gl.depthMask(false);
-	        // gl.disable(gl.DEPTH_TEST);
-	        // gl.depthFunc(gl.GL_GEQUAL);
 
 	        gl.enable(gl.STENCIL_TEST);
-	        // gl.stencilOp(gl.KEEP, gl.KEEP, gl.KEEP);
-	        // gl.stencilOp(gl.INCR, gl.INCR, gl.INCR);
 	        gl.stencilFunc(gl.EQUAL, 1, 0xff);
-	        // gl.stencilOp(gl.KEEP, gl.REPLACE, gl.REPLACE);
 	        gl.stencilOp(gl.INCR, gl.INCR, gl.INCR);
-			// gl.stencilMask(0xFF);        
-	        // gl.clear(gl.STENCIL_BUFFER_BIT);
 
-			amaterial.uniforms.tmpParticleSize.value = 150.0;
+			amaterial.uniforms.tmpParticleSize.value = 450.0;
 			this.renderer.clear(false, false,false);
 			this.autoClearColor = false;
 			this.renderer.render(ascene, this.cameras.fullscreenCamera);
@@ -351,29 +341,29 @@ class particleCollisionSystem {
 
   // //       // third render
 
-  //       gl.colorMask(false, true, false, false);
+        gl.colorMask(false, true, false, false);
 		
-		// gl.enable(gl.STENCIL_TEST);
-		// gl.stencilOp(gl.INCR, gl.INCR, gl.INCR);
-		// gl.stencilFunc(gl.EQUAL, 1, 0xff);
-		// gl.stencilMask(0xFF);        
-	 //    gl.clear(gl.STENCIL_BUFFER_BIT);
-  //       // buffers.stencil.setClear(0);
-		// amaterial.uniforms.tmpParticleSize.value = 300;
-  //       this.renderer.render(ascene, this.cameras.fullscreenCamera);
+		gl.enable(gl.STENCIL_TEST);
+		gl.stencilOp(gl.INCR, gl.INCR, gl.INCR);
+		gl.stencilFunc(gl.EQUAL, 2, 0xff);
+		gl.stencilMask(0xFF);        
+	    gl.clear(gl.STENCIL_BUFFER_BIT);
+        // buffers.stencil.setClear(0);
+		amaterial.uniforms.tmpParticleSize.value = 300;
+        this.renderer.render(ascene, this.cameras.fullscreenCamera);
 
-  //       // // // fourth render
-  //       // gl.clearColor(0,0,0,1);
-  //       this.renderer.clearStencil();
-  //       gl.colorMask(true, false, false, false);
-  //       gl.enable(gl.STENCIL_TEST);
-		// gl.stencilOp(gl.INCR, gl.INCR, gl.INCR);
-		// gl.stencilFunc(gl.EQUAL, 0, 0xff);
-		// gl.stencilMask(0xFF);        
-	 //    gl.clear(gl.STENCIL_BUFFER_BIT);
-  //       // buffers.stencil.setClear(0);
-  //       amaterial.uniforms.tmpParticleSize = 150;
-  //       this.renderer.render(ascene, this.cameras.fullscreenCamera);
+        // // // fourth render
+        // gl.clearColor(0,0,0,1);
+        this.renderer.clearStencil();
+        gl.colorMask(true, false, false, false);
+        gl.enable(gl.STENCIL_TEST);
+		gl.stencilOp(gl.INCR, gl.INCR, gl.INCR);
+		gl.stencilFunc(gl.ALWAYS, 1, 0xff);
+		gl.stencilMask(0xFF);        
+	    gl.clear(gl.STENCIL_BUFFER_BIT);
+        // buffers.stencil.setClear(0);
+        amaterial.uniforms.tmpParticleSize.value = 150;
+        this.renderer.render(ascene, this.cameras.fullscreenCamera);
 
         // clear status
         // this.renderer.clearStencil();

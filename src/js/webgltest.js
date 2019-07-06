@@ -145,7 +145,30 @@ function main() {
 // gl.stencilMask(0xFF);        
 // gl.clear(gl.STENCIL_BUFFER_BIT);
 
+  gl.uniform1f(pointSizeUniformLocation, 450.0);
+ gl.drawArrays(primitiveType, offset, count);
+
+ gl.clearStencil(0);
+  gl.clear(gl.STENCIL_BUFFER_BIT);
+  gl.colorMask(true, true, true, true);
+  gl.depthMask(false);
+
+  gl.enable(gl.STENCIL_TEST);
+  gl.stencilFunc(gl.EQUAL, 2, 0xff);
+  gl.stencilOp(gl.INCR, gl.INCR, gl.INCR);
+
+
   gl.uniform1f(pointSizeUniformLocation, 300.0);
+ gl.drawArrays(primitiveType, offset, count);
+
+ gl.clearStencil(0);
+  gl.clear(gl.STENCIL_BUFFER_BIT);
+  gl.colorMask(true, true, true, true);
+  gl.depthMask(false);
+  gl.enable(gl.STENCIL_TEST);
+  gl.stencilFunc(gl.EQUAL, 3, 0xff);
+  gl.stencilOp(gl.INCR, gl.INCR, gl.INCR);
+  gl.uniform1f(pointSizeUniformLocation, 150.0);
  gl.drawArrays(primitiveType, offset, count);
 }
 
