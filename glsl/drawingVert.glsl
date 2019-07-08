@@ -1,13 +1,13 @@
-uniform vec2 res;
+uniform vec2 particleResolution;
 uniform vec2 screen;
 uniform float pointSize;
 uniform sampler2D posTex;
 attribute float bodyIndex;
 varying vec4 vdata;
 void main() {
-	vec2 uv = indexToUV(bodyIndex, res);
+	vec2 uv = indexToUV(bodyIndex, particleResolution);
 	
-	uv += 0.5 / res;
+	// uv += 0.5 / res;
 	//vdata = vec4(texture2D( posTex, uv ).xyz, 1);
 	vec4 trans = vec4(texture2D(posTex, uv).xyz, 1);
 	trans.x /= screen.x;

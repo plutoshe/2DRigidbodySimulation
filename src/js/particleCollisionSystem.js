@@ -23,7 +23,7 @@ class particleCollisionSystem {
 		this.scopeXsize = 400.0;
 		this.magnitude = 100;
 		this.stepSize = 1 * this.magnitude;
-		this.particleSize = 0.49 * this.magnitude;
+		this.particleRadius = 0.49 * this.magnitude;
 		this.geometries = {};
 		this.geometries = {};
 		this.meshs = {};
@@ -82,8 +82,8 @@ class particleCollisionSystem {
 	drawing() {
 		this.materials.materialForDrawing = new THREE.ShaderMaterial({
 			uniforms: {
-	            pointSize: { value: this.particleSize },
-	            res: {value: new THREE.Vector2(this.sideSizeX, this.sideSizeY)},
+	            pointSize: { value: this.particleRadius },
+	            particleResolution: {value: new THREE.Vector2(this.sideSizeX, this.sideSizeY)},
 	            posTex: {value: null},
 	            screen: {value: new THREE.Vector2(this.width, this.height)},
 	        },
@@ -106,7 +106,7 @@ class particleCollisionSystem {
 		this.materials.generalMaterial = new THREE.ShaderMaterial({
 			// pointSize represents the number of pixels which its side will be occupying.
 	        uniforms: {
-	            pointSize: { value: this.particleSize },
+	            pointSize: { value: this.particleRadius },
 	        },
 	        vertexShader: getShader( 'generalVert' ),
 	        fragmentShader: getShader( 'generalFrag' ),
@@ -192,7 +192,7 @@ class particleCollisionSystem {
 		
 		this.materials.materialForUpdatePhysics = new THREE.ShaderMaterial({
 			uniforms: {
-				res: {value: new THREE.Vector2(this.sideSizeX, this.sideSizeY)},
+				particleResolution: {value: new THREE.Vector2(this.sideSizeX, this.sideSizeY)},
 				screen: {value: new THREE.Vector2(this.width, this.height)},
 				posTex: {value: this.textures.posTex1.texture},
 				deltaTime: {value: this.deltaTime},
@@ -228,31 +228,36 @@ class particleCollisionSystem {
 		this.renderer.setRenderTarget(null);
 	}
 
-	convertParticleToCell() {
-		this.materials.materialConvertParticleToCell = new THREE.ShaderMaterial{
+	initConvertParticleToCell() {
+		this.materials.materialConvertParticleToCell = new THREE.ShaderMaterial({
 			uniforms: {
-				cellSize: {value: new THREE.Vector2(cellSize)},
-				gridPos: {value: new THREE.Vector3(0,0,0)},
-				particlePosTex: {value: this.texture.posTex1.texture},
-				particleSize: {value: new Vector2(sideSizeX, sideSizeY)},
+				cellSize: {value: new THREE.Vector2(this.stepSize, this.stepSize)},
+				gridOriginPos: {value: new THREE.Vector2(0,0)},
+				particlePosTex: {value: this.textures.posTex1.texture},
+				particleResolution: {value: new THREE.Vector2(this.sideSizeX, this.sideSizeY)},
+				pointSize: {value : 1},
+				gridTextureResolution: {value: new THREE.Vector2(this.textures.cellTex.width, this.textures.cellTex.height)}
 			},
 			vertexShader: getShader("convertParticleToCellVert"),
 			fragmentShader: getShader("convertParticleToCellFrag"),
-		}
+		});
+		//console.log(this.textures.cellTex.width, this.textures.cellTex.height);
+		//console.log(this.vertices.startingGeneralVertices[0] / this.stepSize);
 		this.geometries.geometryConvertParticelToCell = new THREE.BufferGeometry();
-		this.geometries.addAttribute();
+		this.geometries.geometryConvertParticelToCell.addAttribute("position", this.buffers.startingVertices);
+		this.geometries.geometryConvertParticelToCell.addAttribute("particleIndex", this.buffers.index);
 		var gl = this.renderer.context;
 		var buffers = this.renderer.state.buffers;
-		this.mesh.meshConvertParticleToCell = new THREE.Points(
+		this.meshs.meshConvertParticleToCell = new THREE.Points(
 			this.geometries.geometryConvertParticelToCell,
 			this.materials.materialConvertParticleToCell);
-		this.scene.sceneConvertParticleToCell = new THREE.Scene();
-		this.scene.add(this.mesh.meshConvertParticleToCell);
-		particleRenderCell(
+		this.scenes.sceneConvertParticleToCell = new THREE.Scene();
+		this.scenes.sceneConvertParticleToCell.add(this.meshs.meshConvertParticleToCell);
+		this.particleRenderCell(
 			this.texture.cellTex, 
-			this.scene.sceneConvertParticleToCell, 
+			this.scenes.sceneConvertParticleToCell, 
 			this.materials.materialConvertParticleToCell,
-			[2,2,2,2]);
+			[1,1,1,1]);
 	}
 
 	particleRenderCell(renderTarget, ascene, amaterial, layerSize) {
@@ -263,14 +268,14 @@ class particleCollisionSystem {
         this.renderer.alpha = true;  
 
 		// first render
-	  
+	  	gl.colorMask(true, true, true, true);
   	 	gl.clearColor(0,0,0,0);
         gl.enable(gl.STENCIL_TEST);
         gl.stencilOp(gl.INCR, gl.INCR, gl.INCR);
         gl.stencilFunc(gl.EQUAL, 0, 0xff);
 		gl.stencilMask(0xFF);        
         gl.clear(gl.STENCIL_BUFFER_BIT);
-        amaterial.uniforms.tmpParticleSize.value = layerSize[0];
+        amaterial.uniforms.pointSize.value = layerSize[0];
         this.renderer.setRenderTarget(renderTarget);
 		this.renderer.render(ascene, this.cameras.fullscreenCamera);
 		console.log("Finish");
@@ -286,7 +291,7 @@ class particleCollisionSystem {
         gl.stencilFunc(gl.EQUAL, 1, 0xff);
         gl.stencilOp(gl.INCR, gl.INCR, gl.INCR);
 
-		amaterial.uniforms.tmpParticleSize.value = layerSize[1];
+		amaterial.uniforms.pointSize.value = layerSize[1];
 
 		this.renderer.clear(false, false,false);
 		this.autoClearColor = false;
@@ -300,7 +305,7 @@ class particleCollisionSystem {
 		gl.stencilFunc(gl.EQUAL, 2, 0xff);
 		gl.stencilMask(0xFF);        
 	    gl.clear(gl.STENCIL_BUFFER_BIT);
-		amaterial.uniforms.tmpParticleSize.value = layerSize[2];
+		amaterial.uniforms.pointSize.value = layerSize[2];
         this.renderer.render(ascene, this.cameras.fullscreenCamera);
 
         // fourth render
@@ -310,7 +315,7 @@ class particleCollisionSystem {
 		gl.stencilFunc(gl.EQUAL, 3, 0xff);
 		gl.stencilMask(0xFF);        
 	    gl.clear(gl.STENCIL_BUFFER_BIT);
-        amaterial.uniforms.tmpParticleSize.value = layerSize[3];
+        amaterial.uniforms.pointSize.value = layerSize[3];
         this.renderer.render(ascene, this.cameras.fullscreenCamera);
 
         // clear status
@@ -335,7 +340,7 @@ class particleCollisionSystem {
 
         var amaterial = new THREE.ShaderMaterial({
         	uniforms: {
-        		tmpParticleSize: { value: 0 },
+        		pointSize: { value: 0 },
         	},
         	vertexShader : getShader("testVert"),
         	fragmentShader : getShader("testFrag"),
@@ -351,33 +356,34 @@ class particleCollisionSystem {
 		ascene.add(amesh);
 		// console.log( );
 		
-
         this.particleRenderCell(null, ascene, amaterial,[500,400,300,200]);
 	}
 
 	oneStep(time) {
 		this.deltaTime = this.prevTime === undefined ? 0 : (time - this.prevTime) / 1000;
 		this.prevTime = time;
-		// this.convertParticleToCell();
-		// this.updatePhysics();
-		// this.swapBuffer();
+		//this.convertParticleToCell();
+		//this.testStencil();
+		 //this.updatePhysics();
+		 //this.swapBuffer();
 		
 		// this.drawing();
 	}
 
 	animate(time) {
 		requestAnimationFrame((time) => this.animate(time));
-		//this.oneStep(time);
+		this.oneStep(time);
 	};
 
 	initCells() {
-		this.cellSize = [
-			this.width / this.particleSize * 2,
-			this.height / this.particleSize * 2];
+		this.gridResolutionSize = [
+			this.width / this.stepSize ,
+			this.height / this.stepSize ];
 		this.textures.cellTex = 
 			this.createRenderTarget(
-				this.cellSize[0], 
-				this.cellSize[1]);
+				this.gridResolutionSize[0], 
+				this.gridResolutionSize[1]);
+		this.initConvertParticleToCell();
 	}
 
 	init() {
@@ -401,7 +407,7 @@ class particleCollisionSystem {
 		this.addObjects(this.scenes.majorScene);
 		this.initUpdatePhysics();
 		this.initCells();
-		this.testStencil();
+		//this.testStencil();
   	}
 
 };	

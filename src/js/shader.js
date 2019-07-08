@@ -30,7 +30,8 @@ physicsUpdateFrag = readTextFile("../../glsl/physicsUpdateFrag.glsl");
 testFrag = readTextFile("../../glsl/testFrag.glsl");
 testVert = readTextFile("../../glsl/testVert.glsl");
 shared = readTextFile("../../glsl/shared.glsl");
-
+convertParticleToCellVert = readTextFile("../../glsl/convertParticleToCellVert.glsl");
+convertParticleToCellFrag = readTextFile("../../glsl/convertParticleToCellFrag.glsl");
 
 var shaders = {
 	generalVert,
@@ -44,6 +45,8 @@ var shaders = {
     testFrag,
     testVert,
 	shared,
+    convertParticleToCellVert,
+    convertParticleToCellFrag,
 }
 
 function getShader(id){
