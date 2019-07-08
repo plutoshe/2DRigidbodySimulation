@@ -215,7 +215,7 @@ class particleCollisionSystem {
 
 	}
 
-	updatePhysics() {
+	updatePos() {
 		this.materials.materialForUpdatePhysics.uniforms.posTex.value = this.textures.posTex1.texture;
 		this.materials.materialForUpdatePhysics.uniforms.deltaTime.value = this.deltaTime;
 		this.materials.materialForUpdatePhysics.needsUpdate = true;
@@ -226,6 +226,25 @@ class particleCollisionSystem {
 		this.renderer.setRenderTarget(this.textures.posTex2);
 		this.renderer.render(this.scenes.updatePhysicsScene, this.cameras.fullscreenCamera);
 		this.renderer.setRenderTarget(null);
+	}
+
+	updateParticleForce() {
+
+	}
+
+	updateParticleTorque() {
+
+	}
+	
+	updateVelocity() {
+
+	}
+
+	updatePhysics() {
+		this.updateParticleForce();
+        this.updateParticleTorque();
+        this.updateVelocity();
+        this.updatePos();
 	}
 
 	initConvertParticleToCell() {
@@ -253,11 +272,22 @@ class particleCollisionSystem {
 			this.materials.materialConvertParticleToCell);
 		this.scenes.sceneConvertParticleToCell = new THREE.Scene();
 		this.scenes.sceneConvertParticleToCell.add(this.meshs.meshConvertParticleToCell);
+		this.cellPointSize = 1;
 		this.particleRenderCell(
-			this.texture.cellTex, 
+			this.textures.cellTex, 
 			this.scenes.sceneConvertParticleToCell, 
 			this.materials.materialConvertParticleToCell,
-			[1,1,1,1]);
+			[this.cellPointSize,this.cellPointSize,this.cellPointSize,this.cellPointSize]);
+	}
+
+	updateConvertParticleToCell() {
+		this.materials.materialConvertParticleToCell.uniforms.particlePosTex.value = this.textures.posTex1.texture;
+		this.materials.materialConvertParticleToCell.needsUpdate = true;
+		this.particleRenderCell(
+			this.textures.cellTex, 
+			this.scenes.sceneConvertParticleToCell, 
+			this.materials.materialConvertParticleToCell,
+			[this.cellPointSize,this.cellPointSize,this.cellPointSize,this.cellPointSize]);
 	}
 
 	particleRenderCell(renderTarget, ascene, amaterial, layerSize) {
@@ -362,12 +392,13 @@ class particleCollisionSystem {
 	oneStep(time) {
 		this.deltaTime = this.prevTime === undefined ? 0 : (time - this.prevTime) / 1000;
 		this.prevTime = time;
-		//this.convertParticleToCell();
-		//this.testStencil();
-		 //this.updatePhysics();
-		 //this.swapBuffer();
+		updateParticleVelocity
 		
-		// this.drawing();
+		this.updateConvertParticleToCell();
+		//this.testStencil();
+		this.updatePhysics();
+		this.swapBuffer();
+		this.drawing();
 	}
 
 	animate(time) {
