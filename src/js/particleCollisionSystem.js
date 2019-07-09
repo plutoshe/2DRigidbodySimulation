@@ -52,7 +52,7 @@ class particleCollisionSystem
 	    });;
 	}
 
-	initSettingTexture(bodyIndex, w, h) 
+	initSettingTexturePipeline(bodyIndex, w, h) 
 	{
 		this.materials.settingMaterial = new THREE.ShaderMaterial({
 			uniforms: 
@@ -70,7 +70,7 @@ class particleCollisionSystem
 		this.scenes.settingScene.add(this.meshs.settingTextureMesh);
 	}
 
-	runSettingTexture(renderTarget, dataBuffer, positionBuffer, bodyIndexBuffer, textureResolutionUniform) 
+	runSettingTexturePipeline(renderTarget, dataBuffer, positionBuffer, bodyIndexBuffer, textureResolutionUniform) 
 	{
 		if (positionBuffer) 
 		{
@@ -131,18 +131,8 @@ class particleCollisionSystem
 		this.renderer.render(this.scenes.majorScene, this.cameras.majorCamera);
 	}
 
-	addObjects(scene) {
+	initBuffers() {
 	    var isMeshRendering = false;
-		this.geometries.geometryForMeshs = new THREE.BufferGeometry();
-		this.materials.generalMaterial = new THREE.ShaderMaterial({
-			// pointSize represents the number of pixels which its side will be occupying.
-	        uniforms: {
-	            pointSize: { value: this.particleRadius },
-	        },
-	        vertexShader: getShader( 'generalVert' ),
-	        fragmentShader: getShader( 'generalFrag' ),
-	    });
-		
 		this.vertices.startingGeneralVertices = [];
 		this.vertices.startingPositionData = [];
 		this.vertices.index = [];
@@ -176,17 +166,9 @@ class particleCollisionSystem
 				}
 	    	}
 	    }
-	    
 		this.buffers.startingPosition3Vertices = new THREE.BufferAttribute(new Float32Array(this.vertices.startingGeneralVertices), 3);
 		this.buffers.index = new THREE.BufferAttribute(new Float32Array(this.vertices.index), 1);
 		this.buffers.startingPosition4Vertices = new THREE.BufferAttribute(new Float32Array(this.vertices.startingPositionData), 4);
-
-
-		this.geometries.geometryForPoints = new THREE.BufferGeometry();
-		this.geometries.geometryForPoints.addAttribute('position', this.buffers.startingPosition3Vertices);
-		// this.meshs.tmpMesh = new THREE.Points(this.geometries.geometryForPoints, this.materials.generalMaterial);
-		// this.scenes.majorScene.add(this.meshs.tmpMesh);
-		// this.renderer.render(this.scenes.majorScene, this.cameras.majorCamera);
 	}
 
 	initTextures() 
@@ -197,6 +179,13 @@ class particleCollisionSystem
 		this.textures.velocityTex1 = this.createRenderTarget(this.sideSizeX, this.sideSizeY, type);
 		this.textures.velocityTex2 = this.createRenderTarget(this.sideSizeX, this.sideSizeY, type);
 
+		this.gridResolutionSize = [
+			this.width / this.stepSize ,
+			this.height / this.stepSize ];
+		this.textures.cellTex = 
+			this.createRenderTarget(
+				this.gridResolutionSize[0], 
+				this.gridResolutionSize[1]);
 		// this.textures.relativePosTex1 = createRenderTarget(sideSizeX, sideSizeY, THREE.FloatType);
 		// this.textures.relativePosTex2 = createRenderTarget(sideSizeX, sideSizeY, THREE.FloatType);
 		// this.textures.forceTex1 = createRenderTarget(sideSizeX, sideSizeY, THREE.FloatType);
@@ -209,44 +198,41 @@ class particleCollisionSystem
 		// this.textures.torqueTex2 = createRenderTarget(sideSizeX, sideSizeY, THREE.FloatType);
 	}
 
-	initUpdatePhysics() {
-		
-		this.materials.materialForUpdatePhysics = new THREE.ShaderMaterial({
+	initUpdatePositionPipeline() {
+		this.materials.UpdatePosition = new THREE.ShaderMaterial({
 			uniforms: {
 				particleResolution: {value: new THREE.Vector2(this.sideSizeX, this.sideSizeY)},
 				screen: {value: new THREE.Vector2(this.width, this.height)},
 				posTex: {value: this.textures.posTex1.texture},
+				velocityTex: {value: this.textures.velocityTex1.texture},
 				deltaTime: {value: this.deltaTime},
 			},
-			vertexShader: getShader("physicsUpdateVert"),
-			fragmentShader: getShader("physicsUpdateFrag"),
+			vertexShader: getShader("positionUpdateVert"),
+			fragmentShader: getShader("positionUpdateFrag"),
 		});
-		this.geometries.geometryForUpdatePhysics = new THREE.BufferGeometry();
-		this.geometries.geometryForUpdatePhysics.addAttribute(
+		this.geometries.UpdatePosition = new THREE.BufferGeometry();
+		this.geometries.UpdatePosition.addAttribute(
 			"position", 
 			this.buffers.startingPosition3Vertices);
 			//new THREE.BufferAttribute(new Float32Array(this.sideSizeY * this.sideSizeX * 3), 3));
-		this.geometries.geometryForUpdatePhysics.addAttribute(
+		this.geometries.UpdatePosition.addAttribute(
 			"bodyIndex",
 			this.buffers.index,
 		);
-		this.meshs.meshForUpdate = new THREE.Points(this.geometries.geometryForUpdatePhysics, this.materials.materialForUpdatePhysics);
-		this.scenes.updatePhysicsScene = new THREE.Scene();
-		this.scenes.updatePhysicsScene.add(this.meshs.meshForUpdate);
+		this.meshs.UpdatePosition = new THREE.Points(this.geometries.UpdatePosition, this.materials.UpdatePosition);
+		this.scenes.UpdatePosition = new THREE.Scene();
+		this.scenes.UpdatePosition.add(this.meshs.UpdatePosition);
 
 	}
 
-	updatePos() {
-		this.materials.materialForUpdatePhysics.uniforms.posTex.value = this.textures.posTex1.texture;
-		this.materials.materialForUpdatePhysics.uniforms.deltaTime.value = this.deltaTime;
-		this.materials.materialForUpdatePhysics.needsUpdate = true;
-		// geometryForUpdatePhysics.attributes.position.needsUpdate = true;
-		// geometryForUpdatePhysics.setDrawRange( 0, sideSizeX * sideSizeY);
-		
-		// attributes.data.needsUpdate
+	updatePosition() {
+		this.materials.UpdatePosition.uniforms.posTex.value = this.textures.posTex1.texture;
+		this.materials.UpdatePosition.uniforms.velocityTex.value = this.textures.velocityTex1.texture;
+		this.materials.UpdatePosition.uniforms.deltaTime.value = this.deltaTime;
+		this.materials.UpdatePosition.needsUpdate = true;
+
 		this.renderer.setRenderTarget(this.textures.posTex2);
-		//this.renderer.setRenderTarget(null);
-		this.renderer.render(this.scenes.updatePhysicsScene, this.cameras.fullscreenCamera);
+		this.renderer.render(this.scenes.UpdatePosition, this.cameras.fullscreenCamera);
 		this.renderer.setRenderTarget(null);
 	}
 
@@ -266,40 +252,7 @@ class particleCollisionSystem
 		this.updateParticleForce();
         this.updateParticleTorque();
         this.updateVelocity();
-        this.updatePos();
-	}
-
-	initConvertParticleToCell() {
-		this.materials.materialConvertParticleToCell = new THREE.ShaderMaterial({
-			uniforms: {
-				cellSize: {value: new THREE.Vector2(this.stepSize, this.stepSize)},
-				gridOriginPos: {value: new THREE.Vector2(0,0)},
-				particlePosTex: {value: this.textures.posTex1.texture},
-				particleResolution: {value: new THREE.Vector2(this.sideSizeX, this.sideSizeY)},
-				pointSize: {value : 1},
-				gridTextureResolution: {value: new THREE.Vector2(this.textures.cellTex.width, this.textures.cellTex.height)}
-			},
-			vertexShader: getShader("convertParticleToCellVert"),
-			fragmentShader: getShader("convertParticleToCellFrag"),
-		});
-		//console.log(this.textures.cellTex.width, this.textures.cellTex.height);
-		//console.log(this.vertices.startingGeneralVertices[0] / this.stepSize);
-		this.geometries.geometryConvertParticelToCell = new THREE.BufferGeometry();
-		this.geometries.geometryConvertParticelToCell.addAttribute("position", this.buffers.startingPosition3Vertices);
-		this.geometries.geometryConvertParticelToCell.addAttribute("particleIndex", this.buffers.index);
-		var gl = this.renderer.context;
-		var buffers = this.renderer.state.buffers;
-		this.meshs.meshConvertParticleToCell = new THREE.Points(
-			this.geometries.geometryConvertParticelToCell,
-			this.materials.materialConvertParticleToCell);
-		this.scenes.sceneConvertParticleToCell = new THREE.Scene();
-		this.scenes.sceneConvertParticleToCell.add(this.meshs.meshConvertParticleToCell);
-		this.cellPointSize = 1;
-		this.particleRenderCell(
-			this.textures.cellTex, 
-			this.scenes.sceneConvertParticleToCell, 
-			this.materials.materialConvertParticleToCell,
-			[this.cellPointSize,this.cellPointSize,this.cellPointSize,this.cellPointSize]);
+        this.updatePosition();
 	}
 
 	updateConvertParticleToCell() {
@@ -428,32 +381,85 @@ class particleCollisionSystem
 		this.oneStep(time);
 	};
 
-	initCells() 
+	initCellsPipeline() 
 	{
-		this.gridResolutionSize = [
-			this.width / this.stepSize ,
-			this.height / this.stepSize ];
-		this.textures.cellTex = 
-			this.createRenderTarget(
-				this.gridResolutionSize[0], 
-				this.gridResolutionSize[1]);
-		this.initConvertParticleToCell();
+		this.materials.materialConvertParticleToCell = new THREE.ShaderMaterial({
+			uniforms: {
+				cellSize: {value: new THREE.Vector2(this.stepSize, this.stepSize)},
+				gridOriginPos: {value: new THREE.Vector2(0,0)},
+				particlePosTex: {value: this.textures.posTex1.texture},
+				particleResolution: {value: new THREE.Vector2(this.sideSizeX, this.sideSizeY)},
+				pointSize: {value : 1},
+				gridTextureResolution: {value: new THREE.Vector2(this.textures.cellTex.width, this.textures.cellTex.height)}
+			},
+			vertexShader: getShader("convertParticleToCellVert"),
+			fragmentShader: getShader("convertParticleToCellFrag"),
+		});
+		//console.log(this.textures.cellTex.width, this.textures.cellTex.height);
+		//console.log(this.vertices.startingGeneralVertices[0] / this.stepSize);
+		this.geometries.geometryConvertParticelToCell = new THREE.BufferGeometry();
+		this.geometries.geometryConvertParticelToCell.addAttribute("position", this.buffers.startingPosition3Vertices);
+		this.geometries.geometryConvertParticelToCell.addAttribute("particleIndex", this.buffers.index);
+		var gl = this.renderer.context;
+		var buffers = this.renderer.state.buffers;
+		this.meshs.meshConvertParticleToCell = new THREE.Points(
+			this.geometries.geometryConvertParticelToCell,
+			this.materials.materialConvertParticleToCell);
+		this.scenes.sceneConvertParticleToCell = new THREE.Scene();
+		this.scenes.sceneConvertParticleToCell.add(this.meshs.meshConvertParticleToCell);
+		this.cellPointSize = 1;
+		this.particleRenderCell(
+			this.textures.cellTex, 
+			this.scenes.sceneConvertParticleToCell, 
+			this.materials.materialConvertParticleToCell,
+			[this.cellPointSize,this.cellPointSize,this.cellPointSize,this.cellPointSize]);
+	}
+
+	initGeneralPipeline() {
+		// this.geometries.geometryForPoints = new THREE.BufferGeometry();
+		// this.geometries.geometryForPoints.addAttribute('position', this.buffers.startingPosition3Vertices);
+		
+		// this.materials.generalMaterial = new THREE.ShaderMaterial({
+		// 	// pointSize represents the number of pixels which its side will be occupying.
+	    //     uniforms: {
+	    //         pointSize: { value: this.particleRadius },
+	    //     },
+	    //     vertexShader: getShader( 'generalVert' ),
+	    //     fragmentShader: getShader( 'generalFrag' ),
+	    // });
+		
+		// this.meshs.tmpMesh = new THREE.Points(this.geometries.geometryForPoints, this.materials.generalMaterial);
+		// this.scenes.majorScene.add(this.meshs.tmpMesh);
+		// this.renderer.render(this.scenes.majorScene, this.cameras.majorCamera);
 	}
 
 	initPipelines() 
 	{
 		this.initTextures();
-		// setPositionTexture
-		this.initSettingTexture(this.buffers.index, this.sideSizeX, this.sideSizeY);
-		this.runSettingTexture(
+		// this.initGeneralPipeline();
+		this.initSettingTexturePipeline(this.buffers.index, this.sideSizeX, this.sideSizeY);
+		this.runSettingTexturePipeline(
 			this.textures.posTex1,
 			this.buffers.startingPosition4Vertices,
 			this.buffers.startingPosition3Vertices,
 			this.buffers.index);
-		// this.runSettingTexture(
-		// 	this.textures.velocityTex1,
-		// 	new THREE.BufferAttribute([0,-9.8,0,1] * this.sideSizeX * this.sideSizeY, 4),
-		// );
+		this.initUpdatePositionPipeline();
+		this.initCellsPipeline();
+		var initialVelocity = [];
+		for (var i = 0; i < this.sideSizeX; i++) 
+		{
+			for (var j = 0; j < this.sideSizeY; j++) 
+			{
+				initialVelocity.push(-10);
+				initialVelocity.push(-9.8);
+				initialVelocity.push(0);
+				initialVelocity.push(0);
+			}
+		}
+		this.runSettingTexturePipeline(
+			this.textures.velocityTex1,
+			new THREE.BufferAttribute(new Float32Array(initialVelocity), 4),
+		);
 		
 		// drawing
 		this.drawing();
@@ -478,10 +484,8 @@ class particleCollisionSystem
 	    this.renderer.setSize(this.width, this.height);
 		display.appendChild(this.renderer.domElement);
 
-		this.addObjects(this.scenes.majorScene);
+		this.initBuffers();
 		this.initPipelines();
-		this.initUpdatePhysics();
-		this.initCells();
   	}
 
 };	
