@@ -14,8 +14,10 @@
 // Render each body by looking up body position and quaternion in the correct render target texture.
 
 
-class particleCollisionSystem {
-	constructor() {		
+class particleCollisionSystem 
+{
+	constructor() 
+	{		
 		this.sideSizeX = 0;
 		this.sideSizeY = 0;
 		this.index = [];
@@ -40,7 +42,8 @@ class particleCollisionSystem {
 		return a > b? a : b;
 	}
 
-	createRenderTarget(w,h,type,format){
+	createRenderTarget(w,h,type,format)
+	{
 	    return new THREE.WebGLRenderTarget(w, h, {
 	        minFilter: THREE.LinearFilter,//THREE.NearestFilter,
 	        magFilter: THREE.NearestFilter,
@@ -49,34 +52,62 @@ class particleCollisionSystem {
 	    });;
 	}
 
-	settingTexture(renderTarget, position, bodyIndex, data, w, h) {
+	initSettingTexture(bodyIndex, w, h) 
+	{
 		this.materials.settingMaterial = new THREE.ShaderMaterial({
-			uniforms: {
+			uniforms: 
+			{
 	            res: { value: new THREE.Vector2(w, h) },
 	        },
 	        vertexShader: getShader( 'textureSetVert' ),
 	        fragmentShader: getShader( 'textureSetFrag' ),
 		});
+		
 		this.geometries.settingGeometry = new THREE.BufferGeometry();
-		this.geometries.settingGeometry.addAttribute("position",  position); 
 		this.geometries.settingGeometry.addAttribute("bodyIndex",  bodyIndex); 
-		this.geometries.settingGeometry.addAttribute("data", data); 
-		this.meshs.settingTextureMesh = new THREE.Points(this.geometries.settingGeometry, this.materials.settingMaterial);
-
+		this.meshs.settingTextureMesh = new THREE.Points(this.geometries.settingGeometry, this.materials.settingMaterial); 
 		this.scenes.settingScene = new THREE.Scene();
 		this.scenes.settingScene.add(this.meshs.settingTextureMesh);
+	}
 
+	runSettingTexture(renderTarget, dataBuffer, positionBuffer, bodyIndexBuffer, textureResolutionUniform) 
+	{
+		if (positionBuffer) 
+		{
+			this.geometries.settingGeometry.addAttribute("position",  positionBuffer); 
+		}
+		if (dataBuffer) 
+		{
+			this.geometries.settingGeometry.addAttribute("data", dataBuffer);
+		}
+		if (bodyIndexBuffer) 
+		{
+			this.geometries.settingGeometry.addAttribute("bodyIndex",  bodyIndexBuffer); 
+		}
+		if (textureResolutionUniform)
+		{
+			this.materials.settingMaterial.uniforms.res.value = textureResolutionUniform;
+			this.materials.settingMaterial.needsUpdate = true;
+			console.log("uniform true");
+		}
+		
+		if (dataBuffer || positionBuffer || bodyIndexBuffer) 
+		{
+			this.geometries.needsUpdate = true;
+			console.log("attribute true");
+		}
+		
 		this.renderer.clear();
 		this.renderer.setRenderTarget(renderTarget);
 		this.renderer.render(this.scenes.settingScene, this.cameras.fullscreenCamera);
 		this.renderer.setRenderTarget(null);
-		this.renderer.clear();
 	}
 
 	swapBuffer() {
 		var tmp = this.textures.posTex1;
 		this.textures.posTex1 = this.textures.posTex2;
 		this.textures.posTex2 = tmp;
+		//this.textures.velocityTex1 = this.textures.velocityTex2;
 	}
 
 	drawing() {
@@ -92,7 +123,7 @@ class particleCollisionSystem {
 		});
 		this.materials.materialForDrawing.uniforms.posTex.value = this.textures.posTex1.texture;
 		this.geometries.geometryForDrawing = new THREE.BufferGeometry();
-		this.geometries.geometryForDrawing.addAttribute('position', this.buffers.startingVertices);
+		this.geometries.geometryForDrawing.addAttribute('position', this.buffers.startingPosition3Vertices);
 		this.geometries.geometryForDrawing.addAttribute("bodyIndex", this.buffers.index); 
 
 		this.meshs.drawingPosition = new THREE.Points(this.geometries.geometryForDrawing, this.materials.materialForDrawing);
@@ -145,39 +176,29 @@ class particleCollisionSystem {
 				}
 	    	}
 	    }
-	    this.geometries.geometryForPoints = new THREE.BufferGeometry();
-		
-		this.buffers.startingVertices = new THREE.BufferAttribute(new Float32Array(this.vertices.startingGeneralVertices), 3);
+	    
+		this.buffers.startingPosition3Vertices = new THREE.BufferAttribute(new Float32Array(this.vertices.startingGeneralVertices), 3);
 		this.buffers.index = new THREE.BufferAttribute(new Float32Array(this.vertices.index), 1);
+		this.buffers.startingPosition4Vertices = new THREE.BufferAttribute(new Float32Array(this.vertices.startingPositionData), 4);
 
-		this.geometries.geometryForPoints.addAttribute('position', this.buffers.startingVertices);
+
+		this.geometries.geometryForPoints = new THREE.BufferGeometry();
+		this.geometries.geometryForPoints.addAttribute('position', this.buffers.startingPosition3Vertices);
 		// this.meshs.tmpMesh = new THREE.Points(this.geometries.geometryForPoints, this.materials.generalMaterial);
 		// this.scenes.majorScene.add(this.meshs.tmpMesh);
 		// this.renderer.render(this.scenes.majorScene, this.cameras.majorCamera);
-
-		this.initTextures();
-		// setPositionTexture
-		this.settingTexture(
-			this.textures.posTex1, 
-			this.buffers.startingVertices,
-			this.buffers.index, 
-			new THREE.BufferAttribute(new Float32Array(this.vertices.startingPositionData), 4), 
-			this.sideSizeX, 
-			this.sideSizeY);
-
-		// drawing
-		this.drawing();
 	}
 
-	initTextures() {
+	initTextures() 
+	{
 		var type = THREE.FloatType; //( /(iPad|iPhone|iPod)/g.test( navigator.userAgent ) ) ? THREE.HalfFloatType : THREE.FloatType;
 		this.textures.posTex1 = this.createRenderTarget(this.sideSizeX, this.sideSizeY, type);
 		this.textures.posTex2 = this.createRenderTarget(this.sideSizeX, this.sideSizeY, type);
+		this.textures.velocityTex1 = this.createRenderTarget(this.sideSizeX, this.sideSizeY, type);
+		this.textures.velocityTex2 = this.createRenderTarget(this.sideSizeX, this.sideSizeY, type);
 
 		// this.textures.relativePosTex1 = createRenderTarget(sideSizeX, sideSizeY, THREE.FloatType);
 		// this.textures.relativePosTex2 = createRenderTarget(sideSizeX, sideSizeY, THREE.FloatType);
-		// this.textures.velocityTex1 = createRenderTarget(sideSizeX, sideSizeY, THREE.FloatType);
-		// this.textures.velocityTex2 = createRenderTarget(sideSizeX, sideSizeY, THREE.FloatType);
 		// this.textures.forceTex1 = createRenderTarget(sideSizeX, sideSizeY, THREE.FloatType);
 		// this.textures.forceTex2 = createRenderTarget(sideSizeX, sideSizeY, THREE.FloatType);
 		// this.textures.quaternionTex1 = createRenderTarget(sideSizeX, sideSizeY, THREE.FloatType);
@@ -203,7 +224,7 @@ class particleCollisionSystem {
 		this.geometries.geometryForUpdatePhysics = new THREE.BufferGeometry();
 		this.geometries.geometryForUpdatePhysics.addAttribute(
 			"position", 
-			this.buffers.startingVertices);
+			this.buffers.startingPosition3Vertices);
 			//new THREE.BufferAttribute(new Float32Array(this.sideSizeY * this.sideSizeX * 3), 3));
 		this.geometries.geometryForUpdatePhysics.addAttribute(
 			"bodyIndex",
@@ -224,6 +245,7 @@ class particleCollisionSystem {
 		
 		// attributes.data.needsUpdate
 		this.renderer.setRenderTarget(this.textures.posTex2);
+		//this.renderer.setRenderTarget(null);
 		this.renderer.render(this.scenes.updatePhysicsScene, this.cameras.fullscreenCamera);
 		this.renderer.setRenderTarget(null);
 	}
@@ -263,7 +285,7 @@ class particleCollisionSystem {
 		//console.log(this.textures.cellTex.width, this.textures.cellTex.height);
 		//console.log(this.vertices.startingGeneralVertices[0] / this.stepSize);
 		this.geometries.geometryConvertParticelToCell = new THREE.BufferGeometry();
-		this.geometries.geometryConvertParticelToCell.addAttribute("position", this.buffers.startingVertices);
+		this.geometries.geometryConvertParticelToCell.addAttribute("position", this.buffers.startingPosition3Vertices);
 		this.geometries.geometryConvertParticelToCell.addAttribute("particleIndex", this.buffers.index);
 		var gl = this.renderer.context;
 		var buffers = this.renderer.state.buffers;
@@ -392,7 +414,7 @@ class particleCollisionSystem {
 	oneStep(time) {
 		this.deltaTime = this.prevTime === undefined ? 0 : (time - this.prevTime) / 1000;
 		this.prevTime = time;
-		updateParticleVelocity
+		//updateParticleVelocity
 		
 		this.updateConvertParticleToCell();
 		//this.testStencil();
@@ -406,7 +428,8 @@ class particleCollisionSystem {
 		this.oneStep(time);
 	};
 
-	initCells() {
+	initCells() 
+	{
 		this.gridResolutionSize = [
 			this.width / this.stepSize ,
 			this.height / this.stepSize ];
@@ -417,7 +440,27 @@ class particleCollisionSystem {
 		this.initConvertParticleToCell();
 	}
 
-	init() {
+	initPipelines() 
+	{
+		this.initTextures();
+		// setPositionTexture
+		this.initSettingTexture(this.buffers.index, this.sideSizeX, this.sideSizeY);
+		this.runSettingTexture(
+			this.textures.posTex1,
+			this.buffers.startingPosition4Vertices,
+			this.buffers.startingPosition3Vertices,
+			this.buffers.index);
+		// this.runSettingTexture(
+		// 	this.textures.velocityTex1,
+		// 	new THREE.BufferAttribute([0,-9.8,0,1] * this.sideSizeX * this.sideSizeY, 4),
+		// );
+		
+		// drawing
+		this.drawing();
+	}
+
+	init() 
+	{
   		var display = $('#display')[0];
 
   		this.scenes.majorScene = new THREE.Scene();
@@ -436,9 +479,9 @@ class particleCollisionSystem {
 		display.appendChild(this.renderer.domElement);
 
 		this.addObjects(this.scenes.majorScene);
+		this.initPipelines();
 		this.initUpdatePhysics();
 		this.initCells();
-		//this.testStencil();
   	}
 
 };	
