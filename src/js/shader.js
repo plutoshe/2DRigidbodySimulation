@@ -29,6 +29,8 @@ positionUpdateVert = readTextFile("../../glsl/positionUpdateVert.glsl");
 positionUpdateFrag = readTextFile("../../glsl/positionUpdateFrag.glsl");
 velocityUpdateVert = readTextFile("../../glsl/velocityUpdateVert.glsl");
 velocityUpdateFrag = readTextFile("../../glsl/velocityUpdateFrag.glsl");
+forceUpdateVert = readTextFile("../../glsl/forceUpdateVert.glsl");
+forceUpdateFrag = readTextFile("../../glsl/forceUpdateFrag.glsl");
 testFrag = readTextFile("../../glsl/testFrag.glsl");
 testVert = readTextFile("../../glsl/testVert.glsl");
 shared = readTextFile("../../glsl/shared.glsl");
@@ -51,6 +53,8 @@ var shaders = {
 	shared,
     convertParticleToCellVert,
     convertParticleToCellFrag,
+    forceUpdateVert,
+    forceUpdateFrag,
 }
 
 function getShader(id){

@@ -115,6 +115,7 @@ class particleCollisionSystem
 		// this.textures.posTex2 = tmp;
 		this.swapTexture("posTex1", "posTex2");
 		this.swapTexture("velocityTex1", "velocityTex2");
+		this.swapTexture("forceTex1", "forceTex2");
 		//this.textures.velocityTex1 = this.textures.velocityTex2;
 	}
 
@@ -150,13 +151,14 @@ class particleCollisionSystem
 	    	this.sideSizeY = 0;
 	    	for (var j = -this.scopeYsize / 2; j <= this.scopeYsize / 2; j += this.stepSize) {
 	    		this.sideSizeY++;
-	    		this.vertices.startingGeneralVertices.push(i); 
-	    		this.vertices.startingGeneralVertices.push(j); 
-	    		this.vertices.startingGeneralVertices.push(0);
-	    		this.vertices.startingPositionData.push(i); 
-	    		this.vertices.startingPositionData.push(j); 
-	    		this.vertices.startingPositionData.push(0); 
-	    		this.vertices.startingPositionData.push(1);
+				
+				this.vertices.startingGeneralVertices.push.apply(
+					this.vertices.startingGeneralVertices, 
+					[i, j, 0]);
+				this.vertices.startingPositionData.push.apply(
+					this.vertices.startingPositionData,
+					[i, j, 0, 1],
+				);
 	    		this.vertices.index.push(id);
 	    		id++;
 
@@ -263,10 +265,6 @@ class particleCollisionSystem
 		this.scenes.UpdateVelocity.add(this.meshs.UpdateVelocity);
 	}
 
-	initUpdateForcePipeline() {
-
-	}
-
 	updateVelocity() {
 		this.materials.UpdateVelocity.uniforms.forceTex.value = this.textures.forceTex1.texture;
 		this.materials.UpdateVelocity.uniforms.velocityTex.value = this.textures.velocityTex1.texture;
@@ -289,53 +287,54 @@ class particleCollisionSystem
 		this.renderer.setRenderTarget(null);
 	}
 
+	initUpdateForcePipeline() {
+		this.materials.UpdateForce = new THREE.ShaderMaterial({
+			uniforms: {
+				particleResolution: {value: new THREE.Vector2(this.sideSizeX, this.sideSizeY)},
+				screen: {value: new THREE.Vector2(this.width, this.height)},
+				cellTex: {value: this.textures.cellTex.texture},
+				posTex: {value: this.textures.posTex1.texture},
+				velocityTex: {value: this.textures.velocityTex1.texture},
+				forceTex: {value: this.textures.forceTex1.texture},
+				massTex: {value: this.textures.massTex.texture},
+				gravity: {value: this.gravity},
+				deltaTime: {value: this.deltaTime},
+			},
+			vertexShader: getShader("forceUpdateVert"),
+			fragmentShader: getShader("forceUpdateFrag"),
+		});
+		this.geometries.UpdateForce = new THREE.BufferGeometry();
+		this.geometries.UpdateForce.addAttribute(
+			"position", 
+			this.buffers.startingPosition3Vertices);
+			//new THREE.BufferAttribute(new Float32Array(this.sideSizeY * this.sideSizeX * 3), 3));
+		this.geometries.UpdateForce.addAttribute(
+			"bodyIndex",
+			this.buffers.index,
+		);
+		this.meshs.UpdateForce = new THREE.Points(this.geometries.UpdateForce, this.materials.UpdateForce);
+		this.scenes.UpdateForce = new THREE.Scene();
+		this.scenes.UpdateForce.add(this.meshs.UpdateForce);
+	}
+
 	updateForce(){
-        // var renderer = this.renderer;
-        // var buffers = renderer.state.buffers;
-        // var gl = renderer.context;
+        this.materials.UpdateForce.uniforms.posTex.value = this.textures.posTex1.texture;
+		this.materials.UpdateForce.uniforms.velocityTex.value = this.textures.velocityTex1.texture;
+		this.materials.UpdateForce.uniforms.cellTex.value = this.textures.cellTex.texture;
+		this.materials.UpdateForce.uniforms.forceTex.value = this.textures.forceTex1.texture;
+		console.log(this.deltaTime);
+		this.materials.UpdateForce.uniforms.deltaTime.value = this.deltaTime;
+		this.materials.UpdateForce.needsUpdate = true;
 
-        // // Update force material
-        // var forceMaterial = this.materials.force;
-        // if(!forceMaterial){
-        //     forceMaterial = this.materials.force = new THREE.ShaderMaterial({
-        //         uniforms: {
-        //             cellSize: { value: new THREE.Vector3(this.part*2,this.radius*2,this.radius*2) },
-        //             gridPos: { value: this.broadphase.position },
-        //             posTex:  { value: null },
-        //             particlePosRelative:  { value: null },
-        //             velTex:  { value: null },
-        //             bodyAngularVelTex:  { value: null },
-        //             gridTex:  { value: this.textures.grid.texture },
-        //             params1: { value: this.params1 },
-        //             params2: { value: this.params2 },
-        //             params3: { value: this.params3 },
-        //         },
-        //         vertexShader: passThroughVert,
-        //         fragmentShader: getShader( 'updateForceFrag' ),
-        //         defines: this.getDefines()
-        //     });
-        // }
-
-        // // Update particle forces / collision reaction
-        // buffers.depth.setTest( false );
-        // buffers.stencil.setTest( false );
-        // this.fullscreenQuad.material = this.materials.force;
-        // forceMaterial.uniforms.posTex.value = this.textures.particlePosWorld.texture;
-        // forceMaterial.uniforms.particlePosRelative.value = this.textures.particlePosRelative.texture;
-        // forceMaterial.uniforms.velTex.value = this.textures.particleVel.texture;
-        // forceMaterial.uniforms.bodyAngularVelTex.value = this.textures.bodyAngularVelRead.texture;
-        // renderer.render( this.scenes.fullscreen, this.fullscreenCamera, this.textures.particleForce, false );
-        // forceMaterial.uniforms.posTex.value = null;
-        // forceMaterial.uniforms.particlePosRelative.value = null;
-        // forceMaterial.uniforms.velTex.value = null;
-        // forceMaterial.uniforms.bodyAngularVelTex.value = null;
-        // this.fullscreenQuad.material = null;
+		this.renderer.setRenderTarget(this.textures.forceTex2);
+		this.renderer.render(this.scenes.UpdateForce, this.cameras.fullscreenCamera);
+		this.renderer.setRenderTarget(null);
     }
 
 	updatePhysics() {
+		this.updatePosition();
 		this.updateForce();
 		this.updateVelocity();
-        this.updatePosition();
 	}
 
 	updateConvertParticleToCell() {
@@ -519,44 +518,50 @@ class particleCollisionSystem
 	initPipelines() 
 	{
 		this.initTextures();
+
+		var initialVelocity = [];
+		var initialForce = [];
+		var initialMass = [];
 		// this.initGeneralPipeline();
+		for (var i = 0; i < this.sideSizeX; i++) 
+		{
+			for (var j = 0; j < this.sideSizeY; j++) 
+			{
+				initialVelocity.push.apply(initialVelocity, [0, 0, 0, 0]);
+				initialForce.push.apply(initialForce, [0, -9, 0, 0]);
+				initialMass.push.apply(initialMass, [0, 0, 0, 10]);
+			}
+		}	
+
 		this.initSettingTexturePipeline(this.buffers.index, this.sideSizeX, this.sideSizeY);
+		
 		this.runSettingTexturePipeline(
 			this.textures.posTex1,
 			this.buffers.startingPosition4Vertices,
 			this.buffers.startingPosition3Vertices,
 			this.buffers.index);
-		this.initUpdatePositionPipeline();
-		this.initUpdateVelocityPipeline();
-		this.initUpdateForcePipeline();
-		this.initCellsPipeline();
-		var initialVelocity = [];
-		var initialForce = [];
-		var initialMass = [];
-		for (var i = 0; i < this.sideSizeX; i++) 
-		{
-			for (var j = 0; j < this.sideSizeY; j++) 
-			{
-				initialVelocity.push.apply(initialVelocity, [-10, -9.5, 0, 0]);
-				initialForce.push.apply(initialForce, [0, -9.8, 0, 0]);
-				initialMass.push.apply(initialMass, [0, 0, 0, 10]);
-			}
-		}	
-		this.runSettingTexturePipeline(
-			this.textures.velocityTex1,
-			new THREE.BufferAttribute(new Float32Array(initialVelocity), 4),
-		);
-
 		this.runSettingTexturePipeline(
 			this.textures.massTex,
 			new THREE.BufferAttribute(new Float32Array(initialMass), 4),
 		);
-
+		this.runSettingTexturePipeline(
+			this.textures.velocityTex1,
+			new THREE.BufferAttribute(new Float32Array(initialVelocity), 4),
+		);
+		
 		this.runSettingTexturePipeline(
 			this.textures.forceTex1,
 			new THREE.BufferAttribute(new Float32Array(initialForce), 4),
 		);
 		
+
+		this.initUpdatePositionPipeline();
+		this.initUpdateVelocityPipeline();
+		this.initUpdateForcePipeline();
+		this.initCellsPipeline();
+		
+		
+
 		// drawing
 		this.drawing();
 	}
@@ -573,7 +578,7 @@ class particleCollisionSystem
 	    this.cameras.majorCamera.position.x = 0;
 		this.cameras.majorCamera.position.y = 0;
 		this.cameras.majorCamera.position.z = this.height;
-		this.gravity = new THREE.Vector4(0,-9.8,0,0);
+		this.gravity = new THREE.Vector4(0, 0, 0, 0);
 		this.renderer = new THREE.WebGLRenderer();
 		// this.width = this.max(display.clientWidth, 100);
 		// this.height = this.max(display.clientHeight, 100);
