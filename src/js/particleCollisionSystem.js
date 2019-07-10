@@ -247,6 +247,7 @@ class particleCollisionSystem
 				massTex: {value: this.textures.massTex.texture},
 				gravity: {value: this.gravity},
 				deltaTime: {value: this.deltaTime},
+				drag: {value: this.drag},
 			},
 			vertexShader: getShader("velocityUpdateVert"),
 			fragmentShader: getShader("velocityUpdateFrag"),
@@ -266,6 +267,7 @@ class particleCollisionSystem
 	}
 
 	updateVelocity() {
+		this.materials.UpdateVelocity.uniforms.posTex.value = this.textures.posTex1.texture;
 		this.materials.UpdateVelocity.uniforms.forceTex.value = this.textures.forceTex1.texture;
 		this.materials.UpdateVelocity.uniforms.velocityTex.value = this.textures.velocityTex1.texture;
 		this.materials.UpdateVelocity.uniforms.deltaTime.value = this.deltaTime;
@@ -288,6 +290,7 @@ class particleCollisionSystem
 	}
 
 	initUpdateForcePipeline() {
+		console.log(this.particleRadius);
 		this.materials.UpdateForce = new THREE.ShaderMaterial({
 			uniforms: {
 				particleResolution: {value: new THREE.Vector2(this.sideSizeX, this.sideSizeY)},
@@ -299,6 +302,10 @@ class particleCollisionSystem
 				massTex: {value: this.textures.massTex.texture},
 				gravity: {value: this.gravity},
 				deltaTime: {value: this.deltaTime},
+				stiffness: {value: this.stiffness},
+				damping: {value: this.damping},
+				friction: {value: this.friction},
+				particleRadius: {value: this.particleRadius},
 			},
 			vertexShader: getShader("forceUpdateVert"),
 			fragmentShader: getShader("forceUpdateFrag"),
@@ -322,7 +329,6 @@ class particleCollisionSystem
 		this.materials.UpdateForce.uniforms.velocityTex.value = this.textures.velocityTex1.texture;
 		this.materials.UpdateForce.uniforms.cellTex.value = this.textures.cellTex.texture;
 		this.materials.UpdateForce.uniforms.forceTex.value = this.textures.forceTex1.texture;
-		console.log(this.deltaTime);
 		this.materials.UpdateForce.uniforms.deltaTime.value = this.deltaTime;
 		this.materials.UpdateForce.needsUpdate = true;
 
@@ -365,7 +371,6 @@ class particleCollisionSystem
         amaterial.uniforms.pointSize.value = layerSize[0];
         this.renderer.setRenderTarget(renderTarget);
 		this.renderer.render(ascene, this.cameras.fullscreenCamera);
-		console.log("Finish");
 	
 		// second render   
 		     
@@ -527,8 +532,8 @@ class particleCollisionSystem
 		{
 			for (var j = 0; j < this.sideSizeY; j++) 
 			{
-				initialVelocity.push.apply(initialVelocity, [0, 0, 0, 0]);
-				initialForce.push.apply(initialForce, [0, -9, 0, 0]);
+				initialVelocity.push.apply(initialVelocity, [0, -10, 0, 0]);
+				initialForce.push.apply(initialForce, [0, -9.8, 0, 0]);
 				initialMass.push.apply(initialMass, [0, 0, 0, 10]);
 			}
 		}	
@@ -569,7 +574,10 @@ class particleCollisionSystem
 	init() 
 	{
   		var display = $('#display')[0];
-
+		this.drag = 0.3;
+		this.friction = 6;
+		this.damping = 3;
+		this.stiffness = 100;
   		this.scenes.majorScene = new THREE.Scene();
   		this.width = 800;
   		this.height = 600;
@@ -578,7 +586,7 @@ class particleCollisionSystem
 	    this.cameras.majorCamera.position.x = 0;
 		this.cameras.majorCamera.position.y = 0;
 		this.cameras.majorCamera.position.z = this.height;
-		this.gravity = new THREE.Vector4(0, 0, 0, 0);
+		this.gravity = new THREE.Vector4(0, -98, 0, 0);
 		this.renderer = new THREE.WebGLRenderer();
 		// this.width = this.max(display.clientWidth, 100);
 		// this.height = this.max(display.clientHeight, 100);
