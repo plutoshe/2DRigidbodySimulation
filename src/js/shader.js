@@ -27,6 +27,8 @@ drawingVert = readTextFile("../../glsl/drawingVert.glsl");
 drawingFrag = readTextFile("../../glsl/drawingFrag.glsl");
 positionUpdateVert = readTextFile("../../glsl/positionUpdateVert.glsl");
 positionUpdateFrag = readTextFile("../../glsl/positionUpdateFrag.glsl");
+velocityUpdateVert = readTextFile("../../glsl/velocityUpdateVert.glsl");
+velocityUpdateFrag = readTextFile("../../glsl/velocityUpdateFrag.glsl");
 testFrag = readTextFile("../../glsl/testFrag.glsl");
 testVert = readTextFile("../../glsl/testVert.glsl");
 shared = readTextFile("../../glsl/shared.glsl");
@@ -40,6 +42,8 @@ var shaders = {
 	textureSetFrag,
     positionUpdateVert,
     positionUpdateFrag,
+    velocityUpdateVert,
+    velocityUpdateFrag,
     drawingVert,
     drawingFrag,
     testFrag,
