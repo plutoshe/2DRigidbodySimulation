@@ -63,5 +63,5 @@ var shaders = {
 }
 
 function getShader(id){
-  return shared + shaders[id];
+  return shared + "\n" + shaders[id];
 }

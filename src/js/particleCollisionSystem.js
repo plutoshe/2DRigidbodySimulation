@@ -193,8 +193,8 @@ class particleCollisionSystem
 		this.textures.massTex = this.createRenderTarget(this.sideSizeX, this.sideSizeY, type);
 
 		this.gridResolutionSize = [
-			this.width  * 2 / this.stepSize ,
-			this.height * 2 / this.stepSize ];
+			this.width  * 2 / this.stepSize,
+			this.height * 2 / this.stepSize];
 		this.gridOriginPos = [-800, -600];
 		this.textures.cellTex = 
 			this.createRenderTarget(
@@ -347,6 +347,17 @@ class particleCollisionSystem
 	updateConvertParticleToCell() {
 		this.materials.materialConvertParticleToCell.uniforms.particlePosTex.value = this.textures.posTex1.texture;
 		this.materials.materialConvertParticleToCell.needsUpdate = true;
+		this.cellPointSize = 1;
+		this.particleRenderCell(
+			this.textures.cellTex, 
+			this.scenes.sceneConvertParticleToCell, 
+			this.materials.materialConvertParticleToCell,
+			[this.cellPointSize,this.cellPointSize,this.cellPointSize,this.cellPointSize]);
+	}
+
+	updateConvertParticleToCell1() {
+		this.materials.materialConvertParticleToCell.uniforms.particlePosTex.value = this.textures.posTex1.texture;
+		this.materials.materialConvertParticleToCell.needsUpdate = true;
 		this.cellPointSize = 20;
 		this.particleRenderCell(
 			//this.textures.cellTex, 
@@ -472,7 +483,6 @@ class particleCollisionSystem
 
 	initCellsPipeline() 
 	{
-		console.log("!!!!!!!" + this.gridOriginPos);
 		this.materials.materialConvertParticleToCell = new THREE.ShaderMaterial({
 			uniforms: {
 				cellSize: {value: new THREE.Vector2(this.stepSize, this.stepSize)},
@@ -485,8 +495,6 @@ class particleCollisionSystem
 			vertexShader: getShader("convertParticleToCellVert"),
 			fragmentShader: getShader("convertParticleToCellFrag"),
 		});
-		//console.log(this.textures.cellTex.width, this.textures.cellTex.height);
-		//console.log(this.vertices.startingGeneralVertices[0] / this.stepSize);
 		this.geometries.geometryConvertParticelToCell = new THREE.BufferGeometry();
 		this.geometries.geometryConvertParticelToCell.addAttribute("position", this.buffers.startingPosition3Vertices);
 		this.geometries.geometryConvertParticelToCell.addAttribute("particleIndex", this.buffers.index);
@@ -581,8 +589,7 @@ class particleCollisionSystem
 				particlePosTex: {value: this.textures.posTex1.texture},
 				particleResolution: {value: new THREE.Vector2(this.sideSizeX, this.sideSizeY)},
 				gridTextureResolution: {value: new THREE.Vector2(this.textures.cellTex.width, this.textures.cellTex.height)},
-				//posTex: {value: this.textures.posTex1.value},
-				cellTex: {value: this.textures.cellTex.value},
+				cellTex: {value: this.textures.cellTex.texture},
 				gridOriginPos: {value: new THREE.Vector2(this.gridOriginPos[0], this.gridOriginPos[1])},
 				pointSize: {value: this.particleRadius},
 			},
@@ -598,7 +605,7 @@ class particleCollisionSystem
 		this.renderer.render(this.scenes.testNeighboor, this.cameras.fullscreenCamera);
 	}
 
-	printTexture(tex, stepU, stepV, numU, numV) {
+	printTexture(tex, numU, numV) {
 		this.materials.printTexture = new THREE.ShaderMaterial({
 			uniforms: {
 				originTex: {value: tex.texture},
@@ -607,20 +614,12 @@ class particleCollisionSystem
 			vertexShader: getShader("printTextureVert"),
 			fragmentShader: getShader("printTextureFrag"),
 		});
-		console.log(numU, numV);
-		var idU = 0;
 		var uvs = [];
-		for (var i = 0; ; i+= stepU) {
-			if (idU >= numU) break;
-			idU++;
-			var idV = 0;
-			for (var j = 0; ; j += stepV) {
-				if (idV >= numV) break;
-				idV++;
-				uvs.push.apply(uvs, [i, j, 0]);
+		for (var i = 0; i < numU; i++) {
+			for (var j = 0; j < numV; j++) {
+				uvs.push.apply(uvs, [i / numU + 0.5 / numU, j / numV + 0.5 / numV, 0]);
 			}
 		}
-		console.log(uvs);
 		this.geometries.printTexture = new THREE.BufferGeometry();
 		this.geometries.printTexture.addAttribute("position", new THREE.BufferAttribute(new Float32Array(uvs), 3));
 		this.scenes.printTexture = new THREE.Scene();
@@ -652,15 +651,17 @@ class particleCollisionSystem
 
 		this.initBuffers();
 		this.initPipelines();
-		this.printTexture(
-			this.textures.cellTex, 
-			1.0 / this.gridResolutionSize[0], 
-			1.0 / this.gridResolutionSize[1],
-			this.gridResolutionSize[0],
-			this.gridResolutionSize[1],
-			);
+		// this.updateConvertParticleToCell();
+		// this.updateConvertParticleToCell();
 		this.updateConvertParticleToCell();
-	//	this.testNeighboor();
+		// this.printTexture(
+		// 	this.textures.cellTex, 
+		// 	this.gridResolutionSize[0],
+		// 	this.gridResolutionSize[1],
+		// 	);
+		// this.updateConvertParticleToCell1();
+		
+		this.testNeighboor();
   	}
 
 };	

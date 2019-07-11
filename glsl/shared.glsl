@@ -12,5 +12,5 @@ vec2 worldPosToGridPos(vec2 postion, vec2 gridOriginPos, vec2 cellSize) {
 }
 
 vec2 gridPosToGridUV(vec2 gridPos, vec2 gridTexSize) {
-	return gridPos / gridTexSize;
+	return gridPos / gridTexSize + 0.5 / gridTexSize;
 }
