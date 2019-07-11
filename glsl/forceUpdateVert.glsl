@@ -12,6 +12,9 @@ uniform float stiffness;
 uniform float damping;
 uniform float friction;
 uniform float particleRadius;
+uniform vec2 gridOriginPos;
+uniform vec2 gridTextureResolution;
+uniform vec2 cellSize;
 
 void main() {
 	vec2 uv = indexToUV(bodyIndex, particleResolution);
@@ -22,6 +25,31 @@ void main() {
 	//texture2D(forceTex, uv).xyz;
     vec4 mass = texture2D(massTex, uv);
 	
+
+	// update particle physics
+	vec2 uv = indexToUV(bodyIndex, particleResolution);
+	vec2 pos = texture2D(posTex, uv).xy;
+	vec2 gridPos = worldPosToGridPos(pos, gridOriginPos, cellSize);
+	vec2 gridUV = gridPosToGridUV(gridPos, gridTextureResolution);
+	vec4 particleIndicesInCell;
+	vec2 newuv;
+	vec2 neighborCellTexUV;
+	for (float i = -1.0; i <= 1.0; i += 1.0) {
+		for (float j = -1.0; j <= 1.0; j+= 1.0) {
+			//for (int k = -1; k <= 1; k++) {
+			// neighboorhood coordinate
+			vec2 newGridPos = gridPos + vec2(i,j);
+			neighborCellTexUV = gridPosToGridUV(newGridPos, gridTextureResolution);
+			//neighborCellTexUV += vec2(0.5) / (2.0 * gridTextureResolution); 
+			// value at position
+			particleIndicesInCell = texture2D(cellTex, neighborCellTexUV);
+			newuv = indexToUV(particleIndicesInCell.y, particleResolution);
+			//}
+		}
+	}
+
+
+	// update border physics
 	vec2 boxMin = vec2(-800, -600);
     vec2 boxMax = vec2(800, 600);
 	

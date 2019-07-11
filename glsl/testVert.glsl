@@ -31,14 +31,14 @@ void main() {
 			//neighborCellTexUV += vec2(0.5) / (2.0 * gridTextureResolution); 
 			// value at position
 			particleIndicesInCell = texture2D(cellTex, neighborCellTexUV);
-			newuv = indexToUV(particleIndicesInCell.y, particleResolution);
+			newuv = indexToUV(particleIndicesInCell.w, particleResolution);
 			//}
 		}
 	}
 	vParticleValue = particleIndicesInCell;
-	vParticleIndex = particleIndicesInCell.y;
+	vParticleIndex = particleIndicesInCell.w;
 	gl_PointSize = 100.0;
-	gl_Position = vec4(neighborCellTexUV * 2.0 -1.0, 0,1);
+	gl_Position = vec4(newuv * 2.0 -1.0, 0,1);
 	// gl_Position = vec4(0.7, 0.7, 0, 1);
 }
 
