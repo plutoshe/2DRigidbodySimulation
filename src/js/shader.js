@@ -36,8 +36,13 @@ testVert = readTextFile("../../glsl/testVert.glsl");
 shared = readTextFile("../../glsl/shared.glsl");
 convertParticleToCellVert = readTextFile("../../glsl/convertParticleToCellVert.glsl");
 convertParticleToCellFrag = readTextFile("../../glsl/convertParticleToCellFrag.glsl");
+printTextureVert = readTextFile("../../glsl/printTextureVert.glsl");
+printTextureFrag = readTextFile("../../glsl/printTextureFrag.glsl");
+
 
 var shaders = {
+    printTextureVert,
+    printTextureFrag,
 	generalVert,
 	generalFrag,
 	textureSetVert,

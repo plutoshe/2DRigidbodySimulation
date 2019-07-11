@@ -21,5 +21,5 @@ void main() {
 	// gridUV += 0.5 / gridTextureResolution;
 	gl_PointSize = pointSize;
 	// gl_Position = vec4(2.0*pos - 1.0, 0, 1);
-	gl_Position = vec4(gridUV, 0, 1);
+	gl_Position = vec4(2.0 * gridUV - 1.0, 0, 1);
 }
