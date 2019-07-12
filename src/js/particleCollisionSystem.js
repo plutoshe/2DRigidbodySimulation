@@ -296,7 +296,7 @@ class particleCollisionSystem
 			uniforms: {
 				particleResolution: {value: new THREE.Vector2(this.sideSizeX, this.sideSizeY)},
 				screen: {value: new THREE.Vector2(this.width, this.height)},
-				cellTex: {value: this.textures.cellTex.texture},
+
 				posTex: {value: this.textures.posTex1.texture},
 				velocityTex: {value: this.textures.velocityTex1.texture},
 				forceTex: {value: this.textures.forceTex1.texture},
@@ -307,6 +307,12 @@ class particleCollisionSystem
 				damping: {value: this.damping},
 				friction: {value: this.friction},
 				particleRadius: {value: this.particleRadius},
+
+				cellSize: {value: new THREE.Vector2(this.stepSize, this.stepSize)},
+				gridTextureResolution: {value: new THREE.Vector2(this.textures.cellTex.width, this.textures.cellTex.height)},
+				cellTex: {value: this.textures.cellTex.texture},
+				gridOriginPos: {value: new THREE.Vector2(this.gridOriginPos[0], this.gridOriginPos[1])},
+				pointSize: {value: 1},
 			},
 			vertexShader: getShader("forceUpdateVert"),
 			fragmentShader: getShader("forceUpdateFrag"),
@@ -543,11 +549,12 @@ class particleCollisionSystem
 		{
 			for (var j = 0; j < this.sideSizeY; j++) 
 			{
-				initialVelocity.push.apply(initialVelocity, [0, -10, 0, 0]);
-				initialForce.push.apply(initialForce, [0, -9.8, 0, 0]);
+				initialVelocity.push.apply(initialVelocity, [0, -10, 0, 0]); //Math.random() * 100 - 5
+				initialForce.push.apply(initialForce, [0, -90.8, 0, 0]);
 				initialMass.push.apply(initialMass, [0, 0, 0, 10]);
 			}
 		}	
+		console.log(initialVelocity);
 
 		this.initSettingTexturePipeline(this.buffers.index, this.sideSizeX, this.sideSizeY);
 		
