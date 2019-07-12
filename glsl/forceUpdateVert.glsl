@@ -16,49 +16,70 @@ uniform vec2 gridOriginPos;
 uniform vec2 gridTextureResolution;
 uniform vec2 cellSize;
 
-void main() {
-	vec2 uv = indexToUV(bodyIndex, particleResolution);
-	// uv += 0.5 / res;
-	vec3 position = texture2D(posTex, uv).xyz;
-    vec3 velocity = texture2D(velocityTex, uv).xyz;
-    vec3 force = vec3(0,0,0);
-	//texture2D(forceTex, uv).xyz;
-    vec4 mass = texture2D(massTex, uv);
-	
 
+vec2 particleForce(float STIFFNESS, float DAMPING, float DAMPING_T, float distance, float minDistance, vec2 xi, vec2 xj, vec2 vi, vec2 vj){
+    vec2 rij = xj - xi;
+    vec2 rij_unit = normalize(rij);
+    vec2 vij = vj - vi;
+    vec2 vij_t = vij - dot(vij, rij_unit) * rij_unit;
+    vec2 springForce = - STIFFNESS * (distance - max(length(rij), minDistance)) * rij_unit;
+    vec2 dampingForce = DAMPING * dot(vij,rij_unit) * rij_unit;
+    vec2 tangentForce = DAMPING_T * vij_t;
+    return springForce + dampingForce + tangentForce;
+}
+
+
+void main() {
 	// update particle physics
 	vec2 uv = indexToUV(bodyIndex, particleResolution);
-	vec2 pos = texture2D(posTex, uv).xy;
-	vec2 gridPos = worldPosToGridPos(pos, gridOriginPos, cellSize);
+	vec2 position = texture2D(posTex, uv).xy;
+    vec2 force = vec2(0,0);
+	//texture2D(forceTex, uv).xyz;
+    vec4 mass = texture2D(massTex, uv);
+		
+	vec2 velocity = texture2D(velocityTex, uv).xy;
+	vec2 gridPos = worldPosToGridPos(position, gridOriginPos, cellSize);
 	vec2 gridUV = gridPosToGridUV(gridPos, gridTextureResolution);
 	vec4 particleIndicesInCell;
 	vec2 newuv;
 	vec2 neighborCellTexUV;
+	float neighborIndex;
 	for (float i = -1.0; i <= 1.0; i += 1.0) {
 		for (float j = -1.0; j <= 1.0; j+= 1.0) {
 			//for (int k = -1; k <= 1; k++) {
 			// neighboorhood coordinate
 			vec2 newGridPos = gridPos + vec2(i,j);
 			neighborCellTexUV = gridPosToGridUV(newGridPos, gridTextureResolution);
-			//neighborCellTexUV += vec2(0.5) / (2.0 * gridTextureResolution); 
-			// value at position
 			particleIndicesInCell = texture2D(cellTex, neighborCellTexUV);
-			newuv = indexToUV(particleIndicesInCell.y, particleResolution);
-			//}
+			for (int k = 0; k < 4; k++) {
+				neighborIndex = particleIndicesInCell[k];
+				vec2 neighborUV = indexToUV(neighborIndex, particleResolution);
+				vec2 neighborPosition = texture2D(posTex, neighborUV).xy;
+				vec2 neighborVelocity = texture2D(velocityTex, neighborUV).xy;
+				if (particleIndicesInCell[k] > 0.0 && neighborIndex != bodyIndex + 1.0 &&
+					newGridPos.x>=0.0 && newGridPos.y>=0.0 && 
+					newGridPos.x<gridTextureResolution.x && newGridPos.y<gridTextureResolution.y) {
+					vec2 r = position - neighborPosition;
+					float len = length(r);
+                    if(len > 0.0 && len < particleRadius * 2.0) {
+						vec2 dir = normalize(r);
+						force += particleForce(stiffness, damping, friction, 2.0 * particleRadius, particleRadius, position, neighborPosition, velocity, neighborVelocity);
+					}
+				}
+			}
 		}
 	}
-
 
 	// update border physics
 	vec2 boxMin = vec2(-800, -600);
     vec2 boxMax = vec2(800, 600);
 	
-	vec3 dirs[2];
-    dirs[0] = vec3(1,0,0);
-    dirs[1] = vec3(0,1,0);
+	vec2 dirs[2];
+    dirs[0] = vec2(1,0);
+    dirs[1] = vec2(0,1);
     for(int i=0; i<2; i++){
-		vec3 dir = dirs[i];
-		vec3 tangentVel = velocity - dot(velocity,dir) * dir;
+		vec2 dir = dirs[i];
+		vec2 tangentVel = velocity - dot(velocity,dir) * dir;
 		
 		float x = dot(dir,position) - particleRadius;
 		if (x < boxMin[i]) {
@@ -74,7 +95,7 @@ void main() {
             force -= friction * tangentVel;
         }
 	}
-	vdata = vec4(force, 1.0);
+	vdata = vec4(force, 0.0, 1.0);
 	gl_PointSize = 1.0;
 	gl_Position = vec4(2.0 * uv - 1.0, 0, 1);
 }

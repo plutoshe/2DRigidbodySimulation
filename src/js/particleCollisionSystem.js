@@ -642,7 +642,7 @@ class particleCollisionSystem
 	    this.cameras.majorCamera.position.x = 0;
 		this.cameras.majorCamera.position.y = 0;
 		this.cameras.majorCamera.position.z = this.height;
-		this.gravity = new THREE.Vector4(0, -98, 0, 0);
+		this.gravity = new THREE.Vector4(0, -200, 0, 0);
 		this.renderer = new THREE.WebGLRenderer();
 		// this.width = this.max(display.clientWidth, 100);
 		// this.height = this.max(display.clientHeight, 100);

@@ -1,4 +1,5 @@
 varying float vParticleIndex;
 void main() {
-    gl_FragColor = vec4( vParticleIndex, vParticleIndex, vParticleIndex, vParticleIndex); // indices are stored incremented by 1
+    float value = vParticleIndex + 1.0;
+    gl_FragColor = vec4(value, value, value, value); // indices are stored incremented by 1
 }
