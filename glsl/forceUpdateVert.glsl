@@ -63,14 +63,14 @@ void main() {
 					float len = sqrt(r.x * r.x + r.y * r.y);
                     if( len < particleRadius * 2.0) {
 						vec2 dir = normalize(r);
-						force += particleForce(1.0, 0.1, friction, 2.0 * particleRadius, particleRadius, position, neighborPosition, velocity, neighborVelocity);
+						force += particleForce(0.1, 0.0, 1.0, 2.0 * particleRadius, particleRadius, position, neighborPosition, velocity, neighborVelocity);
 					}
 				}
 			}
 		}
 	}
 
-	// update border physics
+	// update static objects collision
 	vec2 boxMin = vec2(-800, -600);
     vec2 boxMax = vec2(800, 600);
 	
@@ -84,13 +84,18 @@ void main() {
 		float x = dot(dir,position) - particleRadius;
 		if (x < boxMin[i]) {
 			// force = vec3(0, 1000, 0);
+		
+			//force += -stiffness * (boxMin[i] - x) * dir + damping * velocity;
+            //force += friction * tangentVel;
 			force += -( stiffness * (x - boxMin[i]) * dir + damping * dot(velocity,dir) * dir);
-            force -= friction * tangentVel;
+			force -= friction * tangentVel;
 		}
 		x = dot(dir,position) + particleRadius;
         if(i != 1 && x > boxMax[i]){
 			// force = vec3(0, 100, 0);
             dir = -dir;
+			// force += -stiffness * (x - boxMax[i]) * dir + damping * velocity;
+            // force += friction * tangentVel;
             force -= -( stiffness * (x - boxMax[i]) * dir - damping * dot(velocity,dir) * dir);
             force -= friction * tangentVel;
         }
