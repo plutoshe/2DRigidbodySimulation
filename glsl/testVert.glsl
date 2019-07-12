@@ -22,8 +22,8 @@ void main() {
 	vec4 particleIndicesInCell;
 	vec2 newuv;
 	vec2 neighborCellTexUV;
-	for (float i = -1.0; i <= 2.0; i += 1.0) {
-		for (float j = -1.0; j <= 2.0; j+= 1.0) {
+	for (float i = 1.0; i <= 1.0; i += 1.0) {
+		for (float j = 1.0; j <= 1.0; j+= 1.0) {
 			//for (int k = -1; k <= 1; k++) {
 			// neighboorhood coordinate
 			vec2 newGridPos = gridPos + vec2(i,j);
@@ -31,13 +31,14 @@ void main() {
 			//neighborCellTexUV += vec2(0.5) / (2.0 * gridTextureResolution); 
 			// value at position
 			particleIndicesInCell = texture2D(cellTex, neighborCellTexUV);
-			newuv = indexToUV(particleIndicesInCell.w, particleResolution);
+			
+				newuv = indexToUV(particleIndicesInCell.w - 1.0, particleResolution);
 			//}
 		}
 	}
 	vParticleValue = particleIndicesInCell;
 	vParticleIndex = particleIndicesInCell.w;
-	gl_PointSize = 100.0;
+	gl_PointSize = 10.0;
 	gl_Position = vec4(newuv * 2.0 -1.0, 0,1);
 	// gl_Position = vec4(0.7, 0.7, 0, 1);
 }

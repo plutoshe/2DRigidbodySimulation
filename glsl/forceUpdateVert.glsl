@@ -44,26 +44,26 @@ void main() {
 	vec2 newuv;
 	vec2 neighborCellTexUV;
 	float neighborIndex;
-	for (float i = -1.0; i <= 1.0; i += 1.0) {
-		for (float j = -1.0; j <= 1.0; j+= 1.0) {
+	for (float i = -1.0; i < 2.0; i += 1.0) {
+		for (float j = -1.0; j < 2.0; j+= 1.0) {
 			//for (int k = -1; k <= 1; k++) {
 			// neighboorhood coordinate
 			vec2 newGridPos = gridPos + vec2(i,j);
 			neighborCellTexUV = gridPosToGridUV(newGridPos, gridTextureResolution);
 			particleIndicesInCell = texture2D(cellTex, neighborCellTexUV);
 			for (int k = 0; k < 4; k++) {
-				neighborIndex = particleIndicesInCell[k];
+				neighborIndex = particleIndicesInCell[k] - 1.0;
 				vec2 neighborUV = indexToUV(neighborIndex, particleResolution);
 				vec2 neighborPosition = texture2D(posTex, neighborUV).xy;
 				vec2 neighborVelocity = texture2D(velocityTex, neighborUV).xy;
-				if (particleIndicesInCell[k] > 0.0 && neighborIndex != bodyIndex + 1.0 &&
+				if (particleIndicesInCell[k] > 0.0 && neighborIndex != bodyIndex &&
 					newGridPos.x>=0.0 && newGridPos.y>=0.0 && 
 					newGridPos.x<gridTextureResolution.x && newGridPos.y<gridTextureResolution.y) {
 					vec2 r = position - neighborPosition;
-					float len = length(r);
-                    if(len > 0.0 && len < particleRadius * 2.0) {
+					float len = sqrt(r.x * r.x + r.y * r.y);
+                    if( len < particleRadius * 2.0) {
 						vec2 dir = normalize(r);
-						force += particleForce(stiffness, damping, friction, 2.0 * particleRadius, particleRadius, position, neighborPosition, velocity, neighborVelocity);
+						force += particleForce(1.0, 0.1, friction, 2.0 * particleRadius, particleRadius, position, neighborPosition, velocity, neighborVelocity);
 					}
 				}
 			}

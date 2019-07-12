@@ -23,9 +23,9 @@ class particleCollisionSystem
 		this.index = [];
 		this.scopeYsize = 200.0;
 		this.scopeXsize = 400.0;
-		this.magnitude = 100;
+		this.magnitude = 10;
 		this.stepSize = 1 * this.magnitude;
-		this.particleRadius = 0.49 * this.magnitude;
+		this.particleRadius = 0.3 * this.magnitude;
 		this.geometries = {};
 		this.geometries = {};
 		this.meshs = {};
@@ -361,7 +361,7 @@ class particleCollisionSystem
 			[this.cellPointSize,this.cellPointSize,this.cellPointSize,this.cellPointSize]);
 	}
 
-	updateConvertParticleToCell1() {
+	updateConvertParticleToCellPrint() {
 		this.materials.materialConvertParticleToCell.uniforms.particlePosTex.value = this.textures.posTex1.texture;
 		this.materials.materialConvertParticleToCell.needsUpdate = true;
 		this.cellPointSize = 20;
@@ -437,6 +437,8 @@ class particleCollisionSystem
         gl.disable(gl.STENCIL_TEST);
 		gl.disable(gl.DEPTH_TEST);
 		this.renderer.setRenderTarget(null);
+		this.renderer.clear(true, true, true);
+		this.autoClearColor = true;
 	}
 
 
@@ -549,7 +551,7 @@ class particleCollisionSystem
 		{
 			for (var j = 0; j < this.sideSizeY; j++) 
 			{
-				initialVelocity.push.apply(initialVelocity, [0, -10, 0, 0]); //Math.random() * 100 - 5
+				initialVelocity.push.apply(initialVelocity, [Math.random() * 100 - 5, -10, 0, 0]); //Math.random() * 100 - 5
 				initialForce.push.apply(initialForce, [0, -90.8, 0, 0]);
 				initialMass.push.apply(initialMass, [0, 0, 0, 10]);
 			}
@@ -668,7 +670,7 @@ class particleCollisionSystem
 		// 	);
 		// this.updateConvertParticleToCell1();
 		
-		this.testNeighboor();
+		//this.testNeighboor();
   	}
 
 };	
