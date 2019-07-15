@@ -382,9 +382,14 @@ class particleCollisionSystem
 
 	updatePhysics() {
 		this.updateForce();
+		this.swapTexture("forceTex1", "forceTex2");
 		this.updateMomentum();
+		this.swapTexture("momentumTex1", "momentumTex2");
 		this.updateVelocity();
+		this.swapTexture("velocityTex1", "velocityTex2");
 		this.updatePosition();
+		this.swapTexture("posTex1", "posTex2");
+		
 	}
 
 	updateConvertParticleToCell() {

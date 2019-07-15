@@ -38,6 +38,9 @@ convertParticleToCellVert = readTextFile("../../glsl/convertParticleToCellVert.g
 convertParticleToCellFrag = readTextFile("../../glsl/convertParticleToCellFrag.glsl");
 printTextureVert = readTextFile("../../glsl/printTextureVert.glsl");
 printTextureFrag = readTextFile("../../glsl/printTextureFrag.glsl");
+updateMomentumVert = readTextFile("../../glsl/updateMomentumVert.glsl");
+updateMomentumFrag = readTextFile("../../glsl/updateMomentumFrag.glsl");
+
 
 
 var shaders = {
@@ -60,6 +63,8 @@ var shaders = {
     convertParticleToCellFrag,
     forceUpdateVert,
     forceUpdateFrag,
+    updateMomentumVert,
+    updateMomentumFrag,
 }
 
 function getShader(id){
