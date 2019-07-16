@@ -2,11 +2,11 @@ uniform vec2 particleResolution;
 uniform float deltaTime;
 uniform sampler2D posTex;
 uniform sampler2D velocityTex;
-attribute float bodyIndex;
+attribute float particleIndex;
 varying vec2 newPosition;
 
 void main() {
-	vec2 uv = indexToUV(bodyIndex, particleResolution);
+	vec2 uv = indexToUV(particleIndex, particleResolution);
 	// uv += 0.5 / res;
 	vec2 oldPosition = texture2D(posTex, uv).xy;
 	vec2 velocity = texture2D(velocityTex, uv).xy;

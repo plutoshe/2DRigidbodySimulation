@@ -1,5 +1,3 @@
-import { timingSafeEqual } from "crypto";
-
 // illustration for steps
 // Create float render targets of size N*N for bodies: position, quaternion, velocity, angular velocity, force, torque.
 // Create float render targets of size M*M for particles: local position, world position, relative position, force.
@@ -233,7 +231,7 @@ class particleCollisionSystem
 			this.buffers.startingPosition3Vertices);
 			//new THREE.BufferAttribute(new Float32Array(this.sideSizeY * this.sideSizeX * 3), 3));
 		this.geometries.UpdatePosition.addAttribute(
-			"bodyIndex",
+			"particleIndex",
 			this.buffers.index,
 		);
 		this.meshs.UpdatePosition = new THREE.Points(this.geometries.UpdatePosition, this.materials.UpdatePosition);
@@ -249,42 +247,37 @@ class particleCollisionSystem
 					deltaTime: {value: 0},
 					momentumTex: {value: this.textures.momentumTex1},
 					momentumTexResolution: {value: this.generalTexSize},
+					gravity: {value: this.gravity},
 				},
 				vertexShader: getShader("updateMomentumVert"),
 				fragmentShader: getShader("updateMomentumFrag"),
 			}
 		);
 		this.geometries.UpdateMomentum = new THREE.BufferGeometry();
-		this.geometries.UpdateMomentum.BufferAttribute("position", this.buffers.startingPosition3Vertices);
-		this.geometries.UpdateMomentum.BufferAttribute("particleIndex", this.buffers.index);
+		this.geometries.UpdateMomentum.addAttribute("position", this.buffers.startingPosition3Vertices);
+		this.geometries.UpdateMomentum.addAttribute("particleIndex", this.buffers.index);
 		this.scenes.UpdateMomentum = new THREE.Scene();
 		this.scenes.UpdateMomentum.add(new THREE.Points(this.geometries.UpdateMomentum, this.materials.UpdateMomentum));
 	}
 
 	updateMomentum() {
-		this.materials.UpdateMomentum.uniforms.momentumTex.value = this.texture.momentumTex1.texture;
-		this.materials.UpdateMomentum.uniforms.forceTex.value = this.texture.forceTex1.texture;
-		this.materials.UpdateVelocity.uniforms.deltaTime.value = this.deltaTime;
+		this.materials.UpdateMomentum.uniforms.momentumTex.value = this.textures.momentumTex1.texture;
+		this.materials.UpdateMomentum.uniforms.forceTex.value = this.textures.forceTex1.texture;
+		this.materials.UpdateMomentum.uniforms.deltaTime.value = this.deltaTime;
 		this.materials.UpdateMomentum.uniforms.needsUpdate = true;
 
-		this.renderer.renderTarget(this.textures.momentumTex2);
+		this.renderer.setRenderTarget(this.textures.momentumTex2);
 		this.renderer.render(this.scenes.UpdateMomentum, this.cameras.fullscreenCamera);
-		this.renderer.renderTarget(null);
+		this.renderer.setRenderTarget(null);
 	}
 
 	initUpdateVelocityPipeline() {
 		this.materials.UpdateVelocity = new THREE.ShaderMaterial({
 			uniforms: {
 				particleResolution: {value: new THREE.Vector2(this.sideSizeX, this.sideSizeY)},
-				screen: {value: new THREE.Vector2(this.width, this.height)},
-				posTex: {value: this.textures.posTex1.texture},
-				velocityTex: {value: this.textures.velocityTex1.texture},
-				forceTex: {value: this.textures.forceTex1.texture},
+				momentumTex: {value: this.textures.momentumTex1.texture},
 				massTex: {value: this.textures.massTex.texture},
-				gravity: {value: this.gravity},
-				deltaTime: {value: this.deltaTime},
-				particleRadius: {value: this.particleRadius},
-				drag: {value: this.drag},
+				deltaTime: {value: this.deltaTime},				
 			},
 			vertexShader: getShader("velocityUpdateVert"),
 			fragmentShader: getShader("velocityUpdateFrag"),
@@ -295,7 +288,7 @@ class particleCollisionSystem
 			this.buffers.startingPosition3Vertices);
 			//new THREE.BufferAttribute(new Float32Array(this.sideSizeY * this.sideSizeX * 3), 3));
 		this.geometries.UpdateVelocity.addAttribute(
-			"bodyIndex",
+			"particleIndex",
 			this.buffers.index,
 		);
 		this.meshs.UpdateVelocity = new THREE.Points(this.geometries.UpdateVelocity, this.materials.UpdateVelocity);
@@ -304,9 +297,7 @@ class particleCollisionSystem
 	}
 
 	updateVelocity() {
-		this.materials.UpdateVelocity.uniforms.posTex.value = this.textures.posTex1.texture;
-		this.materials.UpdateVelocity.uniforms.forceTex.value = this.textures.forceTex1.texture;
-		this.materials.UpdateVelocity.uniforms.velocityTex.value = this.textures.velocityTex1.texture;
+		this.materials.UpdateVelocity.uniforms.momentumTex.value = this.textures.momentumTex1.texture;
 		this.materials.UpdateVelocity.uniforms.deltaTime.value = this.deltaTime;
 		this.materials.UpdateVelocity.needsUpdate = true;
 
@@ -519,10 +510,10 @@ class particleCollisionSystem
 		this.deltaTime = this.prevTime === undefined ? 0 : (time - this.prevTime) / 1000;
 		this.prevTime = time;
 		//updateParticleVelocity
-		
+		 
 		this.updateConvertParticleToCell();
 		this.updatePhysics();
-		this.swapBuffer();
+		//this.printTexture(this.textures.forceTex1);
 		this.drawing();
 	}
 
@@ -586,6 +577,7 @@ class particleCollisionSystem
 		this.initTextures();
 
 		var initialVelocity = [];
+		var initialMomentum = [];
 		var initialForce = [];
 		var initialMass = [];
 		// this.initGeneralPipeline();
@@ -593,7 +585,8 @@ class particleCollisionSystem
 		{
 			for (var j = 0; j < this.sideSizeY; j++) 
 			{
-				initialVelocity.push.apply(initialVelocity, [Math.random() * 10 - 5, -10, 0, 0]); //Math.random() * 100 - 5
+				initialVelocity.push.apply(initialVelocity, [0, 0, 0, 0]); //Math.random() * 100 - 5
+				initialMomentum.push.apply(initialVelocity, [(Math.random() * 10 - 5) * 10, (-10) * 10, 0, 0]); //Math.random() * 100 - 5
 				initialForce.push.apply(initialForce, [0, -90.8, 0, 0]);
 				initialMass.push.apply(initialMass, [0, 0, 0, 10]);
 			}
@@ -615,6 +608,11 @@ class particleCollisionSystem
 			this.textures.velocityTex1,
 			new THREE.BufferAttribute(new Float32Array(initialVelocity), 4),
 		);
+
+		this.runSettingTexturePipeline(
+			this.textures.momentumTex1,
+			new THREE.BufferAttribute(new Float32Array(initialMomentum), 4),
+		);
 		
 		this.runSettingTexturePipeline(
 			this.textures.forceTex1,
@@ -625,6 +623,7 @@ class particleCollisionSystem
 		this.initUpdatePositionPipeline();
 		this.initUpdateVelocityPipeline();
 		this.initUpdateForcePipeline();
+		this.initUpdateMomentumPipeline();
 		this.initCellsPipeline();
 		
 		
@@ -656,25 +655,30 @@ class particleCollisionSystem
 		this.renderer.render(this.scenes.testNeighboor, this.cameras.fullscreenCamera);
 	}
 
-	printTexture(tex, numU, numV) {
+	printTexture(tex) {
 		this.materials.printTexture = new THREE.ShaderMaterial({
 			uniforms: {
 				originTex: {value: tex.texture},
-				pointSize: {value: 10.0},
 			},
 			vertexShader: getShader("printTextureVert"),
 			fragmentShader: getShader("printTextureFrag"),
 		});
-		var uvs = [];
-		for (var i = 0; i < numU; i++) {
-			for (var j = 0; j < numV; j++) {
-				uvs.push.apply(uvs, [i / numU + 0.5 / numU, j / numV + 0.5 / numV, 0]);
-			}
-		}
+		var vertices = new Float32Array( [
+			-1.0, -1.0,  1.0,
+			 1.0, -1.0,  1.0,
+			 1.0,  1.0,  1.0,
+		
+			 1.0,  1.0,  1.0,
+			-1.0,  1.0,  1.0,
+			-1.0, -1.0,  1.0
+		] );
+		//var uvs = [0,1,2,3];
+		
 		this.geometries.printTexture = new THREE.BufferGeometry();
-		this.geometries.printTexture.addAttribute("position", new THREE.BufferAttribute(new Float32Array(uvs), 3));
+		this.geometries.printTexture.addAttribute("position", new THREE.BufferAttribute(new Float32Array(vertices), 3));
+		//this.geometries.printTexture.addAttribute("uv", new THREE.BufferAttribute(new Float32Array(positions), 3));
 		this.scenes.printTexture = new THREE.Scene();
-		this.scenes.printTexture.add(new THREE.Points(this.geometries.printTexture, this.materials.printTexture));
+		this.scenes.printTexture.add(new THREE.Mesh(this.geometries.printTexture, this.materials.printTexture));
 		this.renderer.render(this.scenes.printTexture, this.cameras.fullscreenCamera);
 	}
 

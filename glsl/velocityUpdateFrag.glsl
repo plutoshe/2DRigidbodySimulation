@@ -1,5 +1,5 @@
-varying vec4 vdata;
+varying vec2 newVelocity;
 
 void main() {
-	gl_FragColor = vdata;
+	gl_FragColor = vec4(newVelocity, 0, 1);
 }
