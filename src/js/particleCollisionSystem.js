@@ -33,6 +33,7 @@ class particleCollisionSystem
 		this.scenes = {};
 		this.cameras = {};
 		this.textures = {};
+		this.images = {};
 		this.vertices = {};
 		this.buffers = {};
 	}
@@ -88,13 +89,11 @@ class particleCollisionSystem
 		{
 			this.materials.settingMaterial.uniforms.res.value = textureResolutionUniform;
 			this.materials.settingMaterial.needsUpdate = true;
-			console.log("uniform true");
 		}
 		
 		if (dataBuffer || positionBuffer || bodyIndexBuffer) 
 		{
 			this.geometries.needsUpdate = true;
-			console.log("attribute true");
 		}
 		
 		this.renderer.clear();
@@ -211,6 +210,14 @@ class particleCollisionSystem
 		// this.textures.avelocityTex2 = this.createRenderTarget(this.sideSizeX, this.sideSizeY, type);
 		// this.textures.torqueTex1 = this.createRenderTarget(this.sideSizeX, this.sideSizeY, type);
 		// this.textures.torqueTex2 = this.createRenderTarget(this.sideSizeX, this.sideSizeY, type);
+
+		// image textures
+
+		this.images.circle = new THREE.TextureLoader().load("src/img/circle.png");
+		//console.log(this.textures.circleTex);
+		this.images.circle.wrapS = THREE.ClampToEdgeWrapping;
+		this.images.circle.wrapT = THREE.ClampToEdgeWrapping;
+		//this.textures.circleTex.repeat.set( 4, 4 );
 	}
 
 	initUpdatePositionPipeline() {
@@ -318,7 +325,6 @@ class particleCollisionSystem
 	}
 
 	initUpdateForcePipeline() {
-		console.log(this.particleRadius);
 		this.materials.UpdateForce = new THREE.ShaderMaterial({
 			uniforms: {
 				particleResolution: {value: new THREE.Vector2(this.sideSizeX, this.sideSizeY)},
@@ -513,8 +519,10 @@ class particleCollisionSystem
 		 
 		this.updateConvertParticleToCell();
 		this.updatePhysics();
-		//this.printTexture(this.textures.forceTex1);
-		this.drawing();
+		//this.printTexture(null, this.textures.massTex, 1.0);
+		this.printTexture(this.images.circle, null);
+		//this.printImage();
+	//	this.drawing();
 	}
 
 	animate(time) {
@@ -588,12 +596,10 @@ class particleCollisionSystem
 				initialVelocity.push.apply(initialVelocity, [Math.random() * 10 - 5, -10, 0, 0]); //Math.random() * 100 - 5
 				
 				initialForce.push.apply(initialForce, [0, -90.8, 0, 0]);
-				initialMass.push.apply(initialMass, [0, 0, 0, 10]);
+				initialMass.push.apply(initialMass, [1, 0, 0, 1]);
 				initialMomentum.push.apply(initialMomentum, initialVelocity.slice(-4).map(function(a) { return a * initialMass.slice(-1)[0];})); //Math.random() * 100 - 5
 			}
 		}	
-		console.log(initialVelocity);
-
 		this.initSettingTexturePipeline(this.buffers.index, this.sideSizeX, this.sideSizeY);
 		
 		this.runSettingTexturePipeline(
@@ -628,7 +634,6 @@ class particleCollisionSystem
 		this.initCellsPipeline();
 		
 		
-
 		// drawing
 		// this.drawing();
 	}
@@ -656,10 +661,12 @@ class particleCollisionSystem
 		this.renderer.render(this.scenes.testNeighboor, this.cameras.fullscreenCamera);
 	}
 
-	printTexture(tex) {
+	printTexture(origintex, dst) {
 		this.materials.printTexture = new THREE.ShaderMaterial({
 			uniforms: {
-				originTex: {value: tex.texture},
+				originTex: {
+					value: origintex,//(origintex==undefined)? origin.texture : null,
+				},
 			},
 			vertexShader: getShader("printTextureVert"),
 			fragmentShader: getShader("printTextureFrag"),
@@ -680,7 +687,36 @@ class particleCollisionSystem
 		//this.geometries.printTexture.addAttribute("uv", new THREE.BufferAttribute(new Float32Array(positions), 3));
 		this.scenes.printTexture = new THREE.Scene();
 		this.scenes.printTexture.add(new THREE.Mesh(this.geometries.printTexture, this.materials.printTexture));
+		this.renderer.setRenderTarget(dst);
+	 
+		
+		var gl = this.renderer.context;
+		
+        this.renderer.alpha = true;  
+
+		// first render
+		
+  	 	gl.clearColor(1, 1, 1, 1);
+		gl.clear(gl.COLOR_BUFFER_BIT);
+		this.autoClearColor = false;
+		this.renderer.autoClear = false;
+		this.renderer.alpha = true; 
 		this.renderer.render(this.scenes.printTexture, this.cameras.fullscreenCamera);
+		this.renderer.setRenderTarget(null);
+	}
+
+	printImage() {
+		//var map = new THREE.TextureLoader().load( "src/img/circle.jpg" );
+		// var material = new THREE.SpriteMaterial( { map: map, color: 0xffffff } );
+		// var sprite = new THREE.Sprite( material );
+		// sprite.scale.set(1024,1024,1);
+		// var scene = new THREE.Scene();
+		// scene.add( sprite );
+		// this.renderer.render(scene, this.cameras.fullscreenCamera);
+		// var canvas = document.createElement( 'canvas' );
+		// var context = canvas.getContext( '2d' );
+
+		
 	}
 
 	init() 
