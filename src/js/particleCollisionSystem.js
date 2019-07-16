@@ -585,10 +585,11 @@ class particleCollisionSystem
 		{
 			for (var j = 0; j < this.sideSizeY; j++) 
 			{
-				initialVelocity.push.apply(initialVelocity, [0, 0, 0, 0]); //Math.random() * 100 - 5
-				initialMomentum.push.apply(initialVelocity, [(Math.random() * 10 - 5) * 10, (-10) * 10, 0, 0]); //Math.random() * 100 - 5
+				initialVelocity.push.apply(initialVelocity, [Math.random() * 10 - 5, -10, 0, 0]); //Math.random() * 100 - 5
+				
 				initialForce.push.apply(initialForce, [0, -90.8, 0, 0]);
 				initialMass.push.apply(initialMass, [0, 0, 0, 10]);
+				initialMomentum.push.apply(initialMomentum, initialVelocity.slice(-4).map(function(a) { return a * initialMass.slice(-1)[0];})); //Math.random() * 100 - 5
 			}
 		}	
 		console.log(initialVelocity);
