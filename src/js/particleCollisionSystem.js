@@ -23,9 +23,9 @@ class particleCollisionSystem
 		this.index = [];
 		this.scopeYsize = 200.0;
 		this.scopeXsize = 400.0;
-		this.magnitude = 10;
+		this.magnitude = 100;
 		this.stepSize = 1 * this.magnitude;
-		this.particleRadius = 0.3 * this.magnitude;
+		this.particleRadius = 0.48 * this.magnitude;
 		this.geometries = {};
 		this.geometries = {};
 		this.meshs = {};
@@ -36,6 +36,7 @@ class particleCollisionSystem
 		this.images = {};
 		this.vertices = {};
 		this.buffers = {};
+		this.isMeshRendering = true;
 	}
 
 	max(a, b) 
@@ -119,31 +120,70 @@ class particleCollisionSystem
 	}
 
 	drawing() {
-		this.materials.materialForDrawing = new THREE.ShaderMaterial({
+
+		
+		this.materials.drawing = new THREE.ShaderMaterial({
 			uniforms: {
-	            pointSize: { value: this.particleRadius },
+	            // pointSize: { value: this.particleRadius },
 	            particleResolution: {value: new THREE.Vector2(this.sideSizeX, this.sideSizeY)},
-	            posTex: {value: null},
-	            screen: {value: new THREE.Vector2(this.width, this.height)},
+	            posTex: {value: this.textures.posTex1.texture},
+				screen: {value: new THREE.Vector2(this.width, this.height)},
+				originTex: {value: this.images.circle},
 	        },
 	        vertexShader: getShader( 'drawingVert' ),
 	        fragmentShader: getShader( 'drawingFrag' ),
 		});
-		this.materials.materialForDrawing.uniforms.posTex.value = this.textures.posTex1.texture;
-		this.geometries.geometryForDrawing = new THREE.BufferGeometry();
-		this.geometries.geometryForDrawing.addAttribute('position', this.buffers.startingPosition3Vertices);
-		this.geometries.geometryForDrawing.addAttribute("bodyIndex", this.buffers.index); 
+		
 
-		this.meshs.drawingPosition = new THREE.Points(this.geometries.geometryForDrawing, this.materials.materialForDrawing);
-		this.scenes.majorScene.add(this.meshs.drawingPosition);
+		this.geometries.drawing = new THREE.BufferGeometry();
+		this.geometries.drawing.addAttribute('position', this.buffers.verticesMesh);
+		this.geometries.drawing.addAttribute("uv", this.buffers.verticesMeshUV);
+		this.geometries.drawing.addAttribute("bodyIndex", this.buffers.verticesMeshCenterIndex); 
+		this.geometries.drawing.setIndex(this.buffers.verticesMeshIndex);
+		
+		
+		this.geometries.drawing.computeFaceNormals();
+		this.geometries.drawing.computeVertexNormals();
+
+		this.meshs.drawing = new THREE.Mesh(this.geometries.drawing, this.materials.drawing);
+		
+		this.scenes.majorScene.add(this.meshs.drawing);
 		this.renderer.render(this.scenes.majorScene, this.cameras.majorCamera);
+		
+	}
+
+	drawingTexture() {
+		this.materials.drawingTexture = new THREE.ShaderMaterial({
+			uniforms: {
+	            originTex: {value: this.images.circle},
+	        },
+	        vertexShader: getShader( 'printTextureVert' ),
+	        fragmentShader: getShader( 'printTextureFrag' ),
+		});
+		this.geometries.drawingTexture = new THREE.BufferGeometry();
+		this.geometries.drawingTexture.addAttribute('position', this.buffers.verticesMeshForTexture);
+		this.geometries.drawingTexture.addAttribute("uv", this.buffers.verticesMeshUV);
+		this.geometries.drawingTexture.setIndex(this.buffers.verticesMeshIndex);
+		this.geometries.drawingTexture.computeFaceNormals();
+		this.geometries.drawingTexture.computeVertexNormals();
+
+		this.meshs.drawingTexture = new THREE.Mesh(
+			this.geometries.drawingTexture, 
+			this.materials.drawingTexture);
+		this.scenes.majorScene.add(this.meshs.drawingTexture);
+		this.renderer.render(this.scenes.majorScene, this.cameras.fullscreenCamera);
 	}
 
 	initBuffers() {
-	    var isMeshRendering = false;
+	    
 		this.vertices.startingGeneralVertices = [];
-		this.vertices.startingPositionData = [];
+		this.vertices.startingPosition4Vertices = [];
 		this.vertices.index = [];
+		this.vertices.verticesMesh = [];
+		this.vertices.verticesMeshIndex = [];
+		this.vertices.verticesMeshUV = [];
+		this.vertices.verticesMeshCenterIndex = [];
+		this.vertices.verticesMeshForTexture = [];
 		var id = 0;
 	    for (var i = -this.scopeXsize / 2; i <= this.scopeXsize / 2; i += this.stepSize) {
 	    	this.sideSizeX++;
@@ -154,30 +194,60 @@ class particleCollisionSystem
 				this.vertices.startingGeneralVertices.push.apply(
 					this.vertices.startingGeneralVertices, 
 					[i, j, 0]);
-				this.vertices.startingPositionData.push.apply(
-					this.vertices.startingPositionData,
+				this.vertices.startingPosition4Vertices.push.apply(
+					this.vertices.startingPosition4Vertices,
 					[i, j, 0, 1],
 				);
-	    		this.vertices.index.push(id);
-	    		id++;
-
-	    		if (isMeshRendering) {
-					// var vertices_mesh = new Float32Array( [
-					// 	i - particle_size, j + particle_size,  0,
-					// 	i - particle_size, j - particle_size,  0,
-					//  	i + particle_size, j - particle_size,  0,
-					//  	i + particle_size, j + particle_size,  0,
-					// ] );
-					// geometry_for_meshs.setIndex([0,1,2, 0, 2,3])
-					// geometry_for_meshs.addAttribute('position', new THREE.BufferAttribute( vertices3, 3 ));			
-					// var mesh3 = new THREE.Mesh(geometry_for_meshs, material3);
-					// scene.add(mesh3);
-				}
+				this.vertices.index.push(id);
+				this.vertices.verticesMeshCenterIndex.push.apply(
+					this.vertices.verticesMeshCenterIndex,
+					[id,id,id,id],
+				);
+				id++;
+				
+				this.vertices.verticesMesh.push.apply(
+					this.vertices.verticesMesh,
+					[
+						- this.particleRadius, - this.particleRadius,  0,
+						+ this.particleRadius, - this.particleRadius,  0,
+						+ this.particleRadius, + this.particleRadius,  0,
+						- this.particleRadius, + this.particleRadius,  0,
+					] );
+				this.vertices.verticesMeshForTexture.push.apply(
+					this.vertices.verticesMeshForTexture,
+					[
+						(i - this.particleRadius) / this.width, (j - this.particleRadius) / this.height,  0,
+						(i + this.particleRadius) / this.width, (j - this.particleRadius) / this.height,  0,
+						(i + this.particleRadius) / this.width, (j + this.particleRadius) / this.height,  0,
+						(i - this.particleRadius) / this.width, (j + this.particleRadius) / this.height,  0,
+					] );
+				var ids = this.vertices.verticesMesh.length / 3;
+				this.vertices.verticesMeshIndex.push.apply(
+					this.vertices.verticesMeshIndex,
+					[ids - 4, ids - 3, ids - 2, ids - 2, ids - 1, ids - 4]);
+				this.vertices.verticesMeshUV.push.apply(
+					this.vertices.verticesMeshUV,
+					[0.0, 0.0, 
+					1.0, 0.0,
+					1.0, 1.0,
+					0.0, 1.0]);
 	    	}
-	    }
+		}
+		// console.log(this.vertices.verticesMesh);
+		// console.log(this.vertices.verticesMeshIndex);
+		// console.log(this.vertices.verticesMeshUV);
+		// console.log(this.vertices.verticesMeshForTexture);
+		// console.log(this.vertices.index);
+		// console.log(this.vertices.verticesMeshCenterIndex);
 		this.buffers.startingPosition3Vertices = new THREE.BufferAttribute(new Float32Array(this.vertices.startingGeneralVertices), 3);
 		this.buffers.index = new THREE.BufferAttribute(new Float32Array(this.vertices.index), 1);
-		this.buffers.startingPosition4Vertices = new THREE.BufferAttribute(new Float32Array(this.vertices.startingPositionData), 4);
+		this.buffers.startingPosition4Vertices = new THREE.BufferAttribute(new Float32Array(this.vertices.startingPosition4Vertices), 4);
+		this.buffers.verticesMesh  = new THREE.BufferAttribute(new Float32Array(this.vertices.verticesMesh), 3);
+		this.buffers.verticesMeshIndex  = new THREE.BufferAttribute(new Uint16Array(this.vertices.verticesMeshIndex), 1);
+		this.buffers.verticesMeshUV  = new THREE.BufferAttribute(new Float32Array(this.vertices.verticesMeshUV), 2);
+		this.buffers.verticesMeshCenterIndex = new THREE.BufferAttribute(new Uint16Array(this.vertices.verticesMeshCenterIndex), 1);
+		this.buffers.verticesMeshForTexture  = new THREE.BufferAttribute(new Float32Array(this.vertices.verticesMeshForTexture), 3);
+		
 	}
 
 	initTextures() 
@@ -519,10 +589,10 @@ class particleCollisionSystem
 		 
 		this.updateConvertParticleToCell();
 		this.updatePhysics();
-		//this.printTexture(null, this.textures.massTex, 1.0);
-		this.printTexture(this.images.circle, null);
-		//this.printImage();
-	//	this.drawing();
+		
+	    // this.printTexture(this.images.circle, null);
+		//  this.drawingTexture();
+		this.drawing();
 	}
 
 	animate(time) {
@@ -675,17 +745,21 @@ class particleCollisionSystem
 			-1.0, -1.0,  1.0,
 			 1.0, -1.0,  1.0,
 			 1.0,  1.0,  1.0,
-		
-			 1.0,  1.0,  1.0,
 			-1.0,  1.0,  1.0,
-			-1.0, -1.0,  1.0
 		] );
-		//var uvs = [0,1,2,3];
+		var indices = [0,1,2,2,3,0];
+		var uvs = [0,0,1,0,1,1,0,1];
 		
 		this.geometries.printTexture = new THREE.BufferGeometry();
 		this.geometries.printTexture.addAttribute("position", new THREE.BufferAttribute(new Float32Array(vertices), 3));
+		this.geometries.printTexture.addAttribute("uv", new THREE.BufferAttribute(new Float32Array(uvs), 2));
+		this.geometries.printTexture.setIndex(new THREE.BufferAttribute(new Uint16Array(indices), 1));
+		
+		this.geometries.printTexture.computeFaceNormals();
+		this.geometries.printTexture.computeVertexNormals();
 		//this.geometries.printTexture.addAttribute("uv", new THREE.BufferAttribute(new Float32Array(positions), 3));
 		this.scenes.printTexture = new THREE.Scene();
+		
 		this.scenes.printTexture.add(new THREE.Mesh(this.geometries.printTexture, this.materials.printTexture));
 		this.renderer.setRenderTarget(dst);
 	 
