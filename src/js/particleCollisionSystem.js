@@ -146,7 +146,9 @@ class particleCollisionSystem
 		this.geometries.drawing.computeVertexNormals();
 
 		this.meshs.drawing = new THREE.Mesh(this.geometries.drawing, this.materials.drawing);
-		
+		var gl = this.renderer.context;
+		//gl.blendFunc( gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA );
+		//gl.enable( gl.BLEND ); 
 		this.scenes.majorScene.add(this.meshs.drawing);
 		this.renderer.render(this.scenes.majorScene, this.cameras.majorCamera);
 		
@@ -320,10 +322,11 @@ class particleCollisionSystem
 		this.materials.UpdateMomentum = new THREE.ShaderMaterial(
 			{
 				uniforms: {
-					forceTex: {value: this.textures.forceTex},
+					forceTex: {value: this.textures.forceTex1.texture},
 					deltaTime: {value: 0},
 					momentumTex: {value: this.textures.momentumTex1},
 					momentumTexResolution: {value: this.generalTexSize},
+					massTex: {value: this.textures.massTex.texture},
 					gravity: {value: this.gravity},
 				},
 				vertexShader: getShader("updateMomentumVert"),
@@ -341,6 +344,7 @@ class particleCollisionSystem
 		this.materials.UpdateMomentum.uniforms.momentumTex.value = this.textures.momentumTex1.texture;
 		this.materials.UpdateMomentum.uniforms.forceTex.value = this.textures.forceTex1.texture;
 		this.materials.UpdateMomentum.uniforms.deltaTime.value = this.deltaTime;
+		this.materials.UpdateMomentum.uniforms.massTex.value = this.textures.massTex.texture;
 		this.materials.UpdateMomentum.uniforms.needsUpdate = true;
 
 		this.renderer.setRenderTarget(this.textures.momentumTex2);
@@ -593,6 +597,7 @@ class particleCollisionSystem
 	    // this.printTexture(this.images.circle, null);
 		//  this.drawingTexture();
 		this.drawing();
+		//this.printTexture(this.textures.massTex, null);
 	}
 
 	animate(time) {
@@ -663,13 +668,14 @@ class particleCollisionSystem
 		{
 			for (var j = 0; j < this.sideSizeY; j++) 
 			{
-				initialVelocity.push.apply(initialVelocity, [Math.random() * 10 - 5, -10, 0, 0]); //Math.random() * 100 - 5
+				initialVelocity.push.apply(initialVelocity, [Math.random() * 10 - 5, -100, 0, 0]); //Math.random() * 100 - 5
 				
-				initialForce.push.apply(initialForce, [0, -90.8, 0, 0]);
-				initialMass.push.apply(initialMass, [1, 0, 0, 1]);
+				initialForce.push.apply(initialForce, [0, 0, 0, 0]);
+				initialMass.push.apply(initialMass, [0, 0, 1, 1]);
 				initialMomentum.push.apply(initialMomentum, initialVelocity.slice(-4).map(function(a) { return a * initialMass.slice(-1)[0];})); //Math.random() * 100 - 5
 			}
 		}	
+		console.log(initialMomentum);
 		this.initSettingTexturePipeline(this.buffers.index, this.sideSizeX, this.sideSizeY);
 		
 		this.runSettingTexturePipeline(
@@ -769,14 +775,25 @@ class particleCollisionSystem
         this.renderer.alpha = true;  
 
 		// first render
-		
-  	 	gl.clearColor(1, 1, 1, 1);
-		gl.clear(gl.COLOR_BUFFER_BIT);
-		this.autoClearColor = false;
+		this.renderer.autoClearColor = false;
 		this.renderer.autoClear = false;
+		this.renderer.antialias = true;
+		this.renderer.setClearAlpha(0.0);
 		this.renderer.alpha = true; 
-		this.renderer.render(this.scenes.printTexture, this.cameras.fullscreenCamera);
-		this.renderer.setRenderTarget(null);
+		this.renderer.premultipliedAlpha = false;
+		
+		gl.clearColor(1,0.5,0.5,0.6);
+		gl.clear(gl.COLOR_BUFFER_BIT);
+		gl.enable( gl.BLEND );
+		//gl.blendEquation( gl.FUNC_ADD );
+		//gl.blendFunc( gl.ZERO, gl.ONE );
+		//gl.blendFunc( gl.ZERO, gl.SRC_ALPHA );
+		// gl.blendFunc( gl.ONE, gl.ZERO );
+		gl.blendFunc( gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA );
+		//gl.blendFunc( gl.SRC_ALPHA, gl.ZERO );
+		 this.renderer.render(this.scenes.printTexture, this.cameras.fullscreenCamera);
+		 this.renderer.setRenderTarget(null);
+		 gl.disable( gl.BLEND );
 	}
 
 	printImage() {
@@ -808,8 +825,8 @@ class particleCollisionSystem
 	    this.cameras.majorCamera.position.x = 0;
 		this.cameras.majorCamera.position.y = 0;
 		this.cameras.majorCamera.position.z = this.height;
-		this.gravity = new THREE.Vector4(0, -200, 0, 0);
-		this.renderer = new THREE.WebGLRenderer();
+		this.gravity = new THREE.Vector4(0, -980, 0, 0);
+		this.renderer = new THREE.WebGLRenderer( { alpha: true });
 		// this.width = this.max(display.clientWidth, 100);
 		// this.height = this.max(display.clientHeight, 100);
 	    this.renderer.setSize(this.width, this.height);

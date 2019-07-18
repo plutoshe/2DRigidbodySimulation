@@ -63,6 +63,7 @@ void main() {
 					float len = sqrt(r.x * r.x + r.y * r.y);
                     if( len < particleRadius * 2.0) {
 						vec2 dir = normalize(r);
+						// the cofficient between fluid
 						force += particleForce(0.1, 0.0, 1.0, 2.0 * particleRadius, particleRadius, position, neighborPosition, velocity, neighborVelocity);
 					}
 				}
@@ -80,7 +81,7 @@ void main() {
     for(int i=0; i<2; i++){
 		vec2 dir = dirs[i];
 		vec2 tangentVel = velocity - dot(velocity,dir) * dir;
-		
+		// the cofficient between fluid and static mesh(like wall)
 		float x = dot(dir,position) - particleRadius;
 		if (x < boxMin[i]) {
 			// force = vec3(0, 1000, 0);
