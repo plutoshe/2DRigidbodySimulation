@@ -23,7 +23,7 @@ class particleCollisionSystem
 		this.index = [];
 		this.scopeYsize = 200.0;
 		this.scopeXsize = 400.0;
-		this.magnitude = 100;
+		this.magnitude = 20;
 		this.stepSize = 1 * this.magnitude;
 		this.particleRadius = 0.48 * this.magnitude;
 		this.geometries = {};
@@ -509,7 +509,7 @@ class particleCollisionSystem
 		     
 		gl.clearStencil(0);
 		gl.clear(gl.STENCIL_BUFFER_BIT);
-        gl.colorMask(false, false, true, false);
+        gl.colorMask(false, true, false, false);
         gl.depthMask(false);
 
         gl.enable(gl.STENCIL_TEST);
@@ -518,14 +518,14 @@ class particleCollisionSystem
 
 		amaterial.uniforms.pointSize.value = layerSize[1];
 
-		this.renderer.clear(false, false,false);
+		this.renderer.clear(false, false, false, false);
 		this.autoClearColor = false;
 		this.renderer.render(ascene, this.cameras.fullscreenCamera);
 	
 
 		// third render
 
-        gl.colorMask(false, true, false, false);
+        gl.colorMask(false, false, true, false);
 		gl.stencilOp(gl.INCR, gl.INCR, gl.INCR);
 		gl.stencilFunc(gl.EQUAL, 2, 0xff);
 		gl.stencilMask(0xFF);        
@@ -535,7 +535,7 @@ class particleCollisionSystem
 
         // fourth render
         this.renderer.clearStencil();
-        gl.colorMask(true, false, false, false);
+        gl.colorMask(false, false, false, true);
 		gl.stencilOp(gl.INCR, gl.INCR, gl.INCR);
 		gl.stencilFunc(gl.EQUAL, 3, 0xff);
 		gl.stencilMask(0xFF);        
@@ -671,7 +671,7 @@ class particleCollisionSystem
 				initialVelocity.push.apply(initialVelocity, [Math.random() * 10 - 5, -100, 0, 0]); //Math.random() * 100 - 5
 				
 				initialForce.push.apply(initialForce, [0, 0, 0, 0]);
-				initialMass.push.apply(initialMass, [0, 0, 1, 1]);
+				initialMass.push.apply(initialMass, [0, 0, 1, 0.02 * this.magnitude]);
 				initialMomentum.push.apply(initialMomentum, initialVelocity.slice(-4).map(function(a) { return a * initialMass.slice(-1)[0];})); //Math.random() * 100 - 5
 			}
 		}	
@@ -814,9 +814,9 @@ class particleCollisionSystem
 	{
   		var display = $('#display')[0];
 		this.drag = 0.3;
-		this.friction = 0.5;
-		this.damping = 0.8;
-		this.stiffness = 10;
+		this.friction = 1;
+		this.damping = 1;
+		this.stiffness = 200;
   		this.scenes.majorScene = new THREE.Scene();
   		this.width = 800;
   		this.height = 600;

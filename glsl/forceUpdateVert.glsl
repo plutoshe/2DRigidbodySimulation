@@ -64,7 +64,10 @@ void main() {
                     if( len < particleRadius * 2.0) {
 						vec2 dir = normalize(r);
 						// the cofficient between fluid
-						force += particleForce(0.1, 0.0, 1.0, 2.0 * particleRadius, particleRadius, position, neighborPosition, velocity, neighborVelocity);
+						force += particleForce(150.0, 0.6, 0.3, 
+						2.0 * particleRadius, particleRadius, 
+						position, neighborPosition, 
+						velocity, neighborVelocity);
 					}
 				}
 			}
@@ -82,25 +85,28 @@ void main() {
 		vec2 dir = dirs[i];
 		vec2 tangentVel = velocity - dot(velocity,dir) * dir;
 		// the cofficient between fluid and static mesh(like wall)
-		float x = dot(dir,position) - particleRadius;
-		if (x < boxMin[i]) {
-			// force = vec3(0, 1000, 0);
+		float x = dot(dir,position) + particleRadius;
 		
-			//force += -stiffness * (boxMin[i] - x) * dir + damping * velocity;
-            //force += friction * tangentVel;
-			force += -( stiffness * (x - boxMin[i]) * dir + damping * dot(velocity,dir) * dir);
-			force -= friction * tangentVel;
-		}
-		x = dot(dir,position) + particleRadius;
         if(i != 1 && x > boxMax[i]){
 			// force = vec3(0, 100, 0);
-            dir = -dir;
+            
 			// force += -stiffness * (x - boxMax[i]) * dir + damping * velocity;
             // force += friction * tangentVel;
-            force -= -( stiffness * (x - boxMax[i]) * dir - damping * dot(velocity,dir) * dir);
+            force = -stiffness * (x - boxMax[i]) * dir - damping * dot(velocity, dir) * dir;
             force -= friction * tangentVel;
         }
+		x = dot(dir,position) - particleRadius;
+		if (x < boxMin[i]) {
+			// force = vec3(0, 1000, 0);
+			dir = -dir;
+			//force += -stiffness * (boxMin[i] - x) * dir + damping * velocity;
+            //force += friction * tangentVel;
+			force = -stiffness * (boxMin[i] - x) * dir - damping * dot(velocity, dir) * dir;
+			force -= friction * tangentVel;
+		}
 	}
+
+	
 	vdata = vec4(force, 0.0, 1.0);
 	gl_PointSize = 1.0;
 	gl_Position = vec4(2.0 * uv - 1.0, 0, 1);
