@@ -23,9 +23,9 @@ class particleCollisionSystem
 		this.index = [];
 		this.scopeYsize = 200.0;
 		this.scopeXsize = 400.0;
-		this.magnitude = 20;
+		this.magnitude = 15;
 		this.stepSize = 1 * this.magnitude;
-		this.particleRadius = 0.48 * this.magnitude;
+		this.particleRadius = 0.5 * this.magnitude;
 		this.geometries = {};
 		this.geometries = {};
 		this.meshs = {};
@@ -37,6 +37,16 @@ class particleCollisionSystem
 		this.vertices = {};
 		this.buffers = {};
 		this.isMeshRendering = true;
+
+		this.drag = 0.3;
+		this.groundFriction = 1;
+		this.groundDamping = 1;
+		this.groundSpring = 200;
+		this.particleFriction = 0.7;
+		this.particleDamping = 1;
+		this.particleSpring = 100;
+		this.width = 800;
+  		this.height = 600;
 	}
 
 	max(a, b) 
@@ -124,7 +134,6 @@ class particleCollisionSystem
 		
 		this.materials.drawing = new THREE.ShaderMaterial({
 			uniforms: {
-	            // pointSize: { value: this.particleRadius },
 	            particleResolution: {value: new THREE.Vector2(this.sideSizeX, this.sideSizeY)},
 	            posTex: {value: this.textures.posTex1.texture},
 				screen: {value: new THREE.Vector2(this.width, this.height)},
@@ -133,6 +142,9 @@ class particleCollisionSystem
 	        vertexShader: getShader( 'drawingVert' ),
 	        fragmentShader: getShader( 'drawingFrag' ),
 		});
+		var gl = this.renderer.context;
+		gl.clearColor(0.5,1,0.5,1.0);
+		gl.clear(gl.COLOR_BUFFER_BIT);
 		
 
 		this.geometries.drawing = new THREE.BufferGeometry();
@@ -146,11 +158,11 @@ class particleCollisionSystem
 		this.geometries.drawing.computeVertexNormals();
 
 		this.meshs.drawing = new THREE.Mesh(this.geometries.drawing, this.materials.drawing);
-		var gl = this.renderer.context;
-		//gl.blendFunc( gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA );
-		//gl.enable( gl.BLEND ); 
+		gl.blendFunc( gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA );
+		gl.enable( gl.BLEND ); 
 		this.scenes.majorScene.add(this.meshs.drawing);
 		this.renderer.render(this.scenes.majorScene, this.cameras.majorCamera);
+		gl.disable( gl.BLEND ); 
 		
 	}
 
@@ -409,10 +421,15 @@ class particleCollisionSystem
 				forceTex: {value: this.textures.forceTex1.texture},
 				massTex: {value: this.textures.massTex.texture},
 				gravity: {value: this.gravity},
-				deltaTime: {value: this.deltaTime},
-				stiffness: {value: this.stiffness},
-				damping: {value: this.damping},
-				friction: {value: this.friction},
+				deltaTime: {value: this.groundDeltaTime},
+
+				groundSpring: {value: this.groundSpring},
+				groundDamping: {value: this.groundDamping},
+				groundFriction: {value: this.groundFriction},
+				particleSpring: {value: this.particleSpring},
+				particleDamping: {value: this.particleDamping},
+				particleFriction: {value: this.particleFriction},
+
 				particleRadius: {value: this.particleRadius},
 
 				cellSize: {value: new THREE.Vector2(this.stepSize, this.stepSize)},
@@ -668,10 +685,10 @@ class particleCollisionSystem
 		{
 			for (var j = 0; j < this.sideSizeY; j++) 
 			{
-				initialVelocity.push.apply(initialVelocity, [Math.random() * 10 - 5, -100, 0, 0]); //Math.random() * 100 - 5
+				initialVelocity.push.apply(initialVelocity, [this.magnitude * (Math.random() * 10 - 5) / 20, this.magnitude * -100 / 20, 0, 0]); //Math.random() * 100 - 5
 				
 				initialForce.push.apply(initialForce, [0, 0, 0, 0]);
-				initialMass.push.apply(initialMass, [0, 0, 1, 0.02 * this.magnitude]);
+				initialMass.push.apply(initialMass, [0, 0, 0, 0.02 * this.magnitude]);
 				initialMomentum.push.apply(initialMomentum, initialVelocity.slice(-4).map(function(a) { return a * initialMass.slice(-1)[0];})); //Math.random() * 100 - 5
 			}
 		}	
@@ -813,13 +830,8 @@ class particleCollisionSystem
 	init() 
 	{
   		var display = $('#display')[0];
-		this.drag = 0.3;
-		this.friction = 1;
-		this.damping = 1;
-		this.stiffness = 200;
   		this.scenes.majorScene = new THREE.Scene();
-  		this.width = 800;
-  		this.height = 600;
+  		
   		this.cameras.fullscreenCamera = new THREE.Camera();
 	    this.cameras.majorCamera = new THREE.PerspectiveCamera( 90, this.width / this.height, 0.1, 1000 );
 	    this.cameras.majorCamera.position.x = 0;

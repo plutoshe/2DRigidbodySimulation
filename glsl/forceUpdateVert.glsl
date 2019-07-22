@@ -8,22 +8,28 @@ uniform sampler2D cellTex;
 uniform vec4 gravity;
 attribute float bodyIndex;
 varying vec4 vdata;
-uniform float stiffness;
-uniform float damping;
-uniform float friction;
 uniform float particleRadius;
 uniform vec2 gridOriginPos;
 uniform vec2 gridTextureResolution;
 uniform vec2 cellSize;
 
+uniform float particleSpring;
+uniform float particleDamping;
+uniform float particleFriction;
+
+uniform float groundSpring;
+uniform float groundDamping;
+uniform float groundFriction;
+
+
 
 vec2 particleForce(float STIFFNESS, float DAMPING, float DAMPING_T, float distance, float minDistance, vec2 xi, vec2 xj, vec2 vi, vec2 vj){
     vec2 rij = xj - xi;
     vec2 rij_unit = normalize(rij);
-    vec2 vij = vj - vi;
+    vec2 vij = vi - vj;
     vec2 vij_t = vij - dot(vij, rij_unit) * rij_unit;
     vec2 springForce = - STIFFNESS * (distance - max(length(rij), minDistance)) * rij_unit;
-    vec2 dampingForce = DAMPING * dot(vij,rij_unit) * rij_unit;
+    vec2 dampingForce = - DAMPING * vij;
     vec2 tangentForce = DAMPING_T * vij_t;
     return springForce + dampingForce + tangentForce;
 }
@@ -64,7 +70,7 @@ void main() {
                     if( len < particleRadius * 2.0) {
 						vec2 dir = normalize(r);
 						// the cofficient between fluid
-						force += particleForce(150.0, 0.6, 0.3, 
+						force += particleForce(particleSpring, particleDamping, groundFriction, 
 						2.0 * particleRadius, particleRadius, 
 						position, neighborPosition, 
 						velocity, neighborVelocity);
@@ -88,21 +94,16 @@ void main() {
 		float x = dot(dir,position) + particleRadius;
 		
         if(i != 1 && x > boxMax[i]){
-			// force = vec3(0, 100, 0);
-            
-			// force += -stiffness * (x - boxMax[i]) * dir + damping * velocity;
-            // force += friction * tangentVel;
-            force = -stiffness * (x - boxMax[i]) * dir - damping * dot(velocity, dir) * dir;
-            force -= friction * tangentVel;
+            force = force - groundSpring * (x - boxMax[i]) * dir - 
+				groundDamping * velocity -
+				groundFriction * tangentVel;
         }
 		x = dot(dir,position) - particleRadius;
 		if (x < boxMin[i]) {
-			// force = vec3(0, 1000, 0);
 			dir = -dir;
-			//force += -stiffness * (boxMin[i] - x) * dir + damping * velocity;
-            //force += friction * tangentVel;
-			force = -stiffness * (boxMin[i] - x) * dir - damping * dot(velocity, dir) * dir;
-			force -= friction * tangentVel;
+			force = force - groundSpring * (boxMin[i] - x) * dir - 
+				groundDamping * velocity - 
+				groundFriction * tangentVel;
 		}
 	}
 
