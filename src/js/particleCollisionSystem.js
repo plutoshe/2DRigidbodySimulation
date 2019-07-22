@@ -535,7 +535,6 @@ class particleCollisionSystem
 
 		amaterial.uniforms.pointSize.value = layerSize[1];
 
-		this.renderer.clear(false, false, false, false);
 		this.autoClearColor = false;
 		this.renderer.render(ascene, this.cameras.fullscreenCamera);
 	
@@ -692,7 +691,6 @@ class particleCollisionSystem
 				initialMomentum.push.apply(initialMomentum, initialVelocity.slice(-4).map(function(a) { return a * initialMass.slice(-1)[0];})); //Math.random() * 100 - 5
 			}
 		}	
-		console.log(initialMomentum);
 		this.initSettingTexturePipeline(this.buffers.index, this.sideSizeX, this.sideSizeY);
 		
 		this.runSettingTexturePipeline(
