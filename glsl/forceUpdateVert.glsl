@@ -81,7 +81,7 @@ void main() {
 	}
 
 	// update static objects collision
-	vec2 boxMin = vec2(-800, -600);
+	vec2 boxMin = vec2(-800, -500);
     vec2 boxMax = vec2(800, 600);
 	
 	vec2 dirs[2];

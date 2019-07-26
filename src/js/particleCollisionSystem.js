@@ -23,9 +23,9 @@ class particleCollisionSystem
 		this.index = [];
 		this.scopeYsize = 200.0;
 		this.scopeXsize = 400.0;
-		this.magnitude = 15;
+		this.magnitude = 5;
 		this.stepSize = 1 * this.magnitude;
-		this.particleRadius = 0.5 * this.magnitude;
+		this.particleRadius = 0.4 * this.magnitude;
 		this.geometries = {};
 		this.geometries = {};
 		this.meshs = {};
@@ -279,8 +279,8 @@ class particleCollisionSystem
 		this.generalTexSize = new THREE.Vector2(this.sideSizeX, this.sideSizeY);
 
 		this.gridResolutionSize = [
-			this.width  * 2 / this.stepSize,
-			this.height * 2 / this.stepSize];
+			this.width  * 2 / (this.particleRadius * 2),
+			this.height * 2 / (this.particleRadius * 2)];
 		this.gridOriginPos = [-800, -600];
 		this.textures.cellTex = 
 			this.createRenderTarget(
@@ -432,7 +432,7 @@ class particleCollisionSystem
 
 				particleRadius: {value: this.particleRadius},
 
-				cellSize: {value: new THREE.Vector2(this.stepSize, this.stepSize)},
+				cellSize: {value: new THREE.Vector2(this.particleRadius * 2, this.particleRadius * 2)},
 				gridTextureResolution: {value: new THREE.Vector2(this.textures.cellTex.width, this.textures.cellTex.height)},
 				cellTex: {value: this.textures.cellTex.texture},
 				gridOriginPos: {value: new THREE.Vector2(this.gridOriginPos[0], this.gridOriginPos[1])},
@@ -603,7 +603,7 @@ class particleCollisionSystem
 	}
 
 	oneStep(time) {
-		this.deltaTime = this.prevTime === undefined ? 0 : (time - this.prevTime) / 1000;
+		this.deltaTime = this.prevTime === undefined ? 0 : (time - this.prevTime) / 3000;
 		this.prevTime = time;
 		//updateParticleVelocity
 		 
@@ -625,7 +625,7 @@ class particleCollisionSystem
 	{
 		this.materials.materialConvertParticleToCell = new THREE.ShaderMaterial({
 			uniforms: {
-				cellSize: {value: new THREE.Vector2(this.stepSize, this.stepSize)},
+				cellSize: {value: new THREE.Vector2(this.particleRadius * 2, this.particleRadius * 2)},
 				gridOriginPos: {value: new THREE.Vector2(this.gridOriginPos[0], this.gridOriginPos[1])},
 				particlePosTex: {value: this.textures.posTex1.texture},
 				particleResolution: {value: new THREE.Vector2(this.sideSizeX, this.sideSizeY)},
@@ -684,8 +684,9 @@ class particleCollisionSystem
 		{
 			for (var j = 0; j < this.sideSizeY; j++) 
 			{
-				initialVelocity.push.apply(initialVelocity, [this.magnitude * (Math.random() * 10 - 5) / 20, this.magnitude * -100 / 20, 0, 0]); //Math.random() * 100 - 5
-				
+				//initialVelocity.push.apply(initialVelocity, [0, 0, 0, 0]); //Math.random() * 100 - 5
+				initialVelocity.push.apply(initialVelocity, [this.magnitude * (Math.random() * 10 - 5) / 20, 1000, 0, 0]); //Math.random() * 100 - 5
+
 				initialForce.push.apply(initialForce, [0, 0, 0, 0]);
 				initialMass.push.apply(initialMass, [0, 0, 0, 0.02 * this.magnitude]);
 				initialMomentum.push.apply(initialMomentum, initialVelocity.slice(-4).map(function(a) { return a * initialMass.slice(-1)[0];})); //Math.random() * 100 - 5
@@ -732,7 +733,7 @@ class particleCollisionSystem
 	testNeighboor() {
 		this.materials.testNeighboor = new THREE.ShaderMaterial({
 			uniforms: {
-				cellSize: {value: new THREE.Vector2(this.stepSize, this.stepSize)},
+				cellSize: {value: new THREE.Vector2(this.particleRadius * 2, this.particleRadius * 2)},
 				particlePosTex: {value: this.textures.posTex1.texture},
 				particleResolution: {value: new THREE.Vector2(this.sideSizeX, this.sideSizeY)},
 				gridTextureResolution: {value: new THREE.Vector2(this.textures.cellTex.width, this.textures.cellTex.height)},
